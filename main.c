@@ -31,6 +31,8 @@ int main(void)
 	{
 		testInputArray[i] = rand() % RECORDSNUM;
 	}
+	//Allocating the re-ordered final array
+	int *finalArray = malloc(sizeof(int) * RECORDSNUM);
 	//Creating the histogram. Each row of it has the hash of the bucket on the left and the number of appearences on the right
 	for (i = 0; i < RECORDSNUM; ++i)
 	{
@@ -55,7 +57,8 @@ int main(void)
 			sum += histogramArray[i][1];
 		}
 	}
-	//For the whole size of our histogram
+	//Making sure everything is ok prints
+	/*//For the whole size of our histogram
 	for (i = 0; i < BUCKETSNUM; ++i)
 	{
 		if (histogramArray[i][1] != 0)
@@ -71,10 +74,30 @@ int main(void)
 			//Print only the hashes that have at least one appearence and the base of their buckets
 			printf("%d %d\n", accumulativeHistogramArray[i][0], accumulativeHistogramArray[i][1] );
 		}
+	}*/
+
+	//Creating the reordered array
+	for (i = 0; i < RECORDSNUM; ++i)
+	{
+		int hash = testInputArray[i]%BUCKETSNUM;
+		finalArray[accumulativeHistogramArray[hash][1]] = testInputArray[i];
+		accumulativeHistogramArray[hash][1]++;
 	}
+	//Making sure everything is ok prints
+	/*for (i = 0; i < RECORDSNUM; ++i)
+	{
+		printf("%d\n", testInputArray[i]);
+	}
+	printf("--------------------\n");
+	for (i = 0; i < RECORDSNUM; ++i)
+	{
+		printf("%d\n", finalArray[i]);
+	}*/
+
 
 	//Free the allocated memory
 	free(testInputArray);
+	free(finalArray);
 	for (i = 0; i < BUCKETSNUM; ++i)
 	{
 		free(histogramArray[i]);

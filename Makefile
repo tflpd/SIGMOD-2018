@@ -13,4 +13,4 @@ main.o: main.c
 	$(CC) $(FLAGS) main.c
 
 clean: 
-	rm -f $(OUTMAIN)
+	rm -f $(OUTMAIN) $(MAIN)
