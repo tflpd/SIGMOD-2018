@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "structs.h"
 
 //Considering n as 8 we ll use 2^10 records so we ll have around 3 records per one of hte 2^8 buckets
 #define RECORDSNUM 1024
@@ -9,6 +10,8 @@
 int main(void)
 {
 	int32_t i;
+	struct tuple *testInputArray;
+	struct tuple *finalArray;
 	//Allocating and initializing the histogram array
 	int **histogramArray = malloc(sizeof(int*) * BUCKETSNUM);
 	for (i = 0; i < BUCKETSNUM; ++i)
@@ -26,18 +29,18 @@ int main(void)
 		accumulativeHistogramArray[i][1] = -1;
 	}
 	//Allocating and initializing the test input array
-	int *testInputArray = malloc(sizeof(int) * RECORDSNUM);
+	testInputArray = malloc(sizeof(tuple) * RECORDSNUM);
 	for (i = 0; i < RECORDSNUM; ++i)
 	{
-		testInputArray[i] = rand() % RECORDSNUM;
+		testInputArray[i].key = rand() % RECORDSNUM;
 	}
 	//Allocating the re-ordered final array
-	int *finalArray = malloc(sizeof(int) * RECORDSNUM);
+	finalArray = malloc(sizeof(tuple) * RECORDSNUM); // to kanw me struct relation , pinaka apo tuples
 	//Creating the histogram. Each row of it has the hash of the bucket on the left and the number of appearences on the right
 	for (i = 0; i < RECORDSNUM; ++i)
 	{
 		//Getting the hash of the specif record
-		int hash = testInputArray[i]%BUCKETSNUM;
+		int hash = testInputArray[i].key	%BUCKETSNUM;
 		//If its the first time we meet that hash then initialize it
 		if (histogramArray[hash][0] == -1)
 		{
@@ -57,8 +60,8 @@ int main(void)
 			sum += histogramArray[i][1];
 		}
 	}
-	//Making sure everything is ok prints
-	/*//For the whole size of our histogram
+	/*//Making sure everything is ok prints
+	//For the whole size of our histogram
 	for (i = 0; i < BUCKETSNUM; ++i)
 	{
 		if (histogramArray[i][1] != 0)
@@ -79,12 +82,12 @@ int main(void)
 	//Creating the reordered array
 	for (i = 0; i < RECORDSNUM; ++i)
 	{
-		int hash = testInputArray[i]%BUCKETSNUM;
+		int hash = testInputArray[i].key%BUCKETSNUM;
 		finalArray[accumulativeHistogramArray[hash][1]] = testInputArray[i];
 		accumulativeHistogramArray[hash][1]++;
 	}
-	//Making sure everything is ok prints
-	/*for (i = 0; i < RECORDSNUM; ++i)
+	/*//Making sure everything is ok prints
+	for (i = 0; i < RECORDSNUM; ++i)
 	{
 		printf("%d\n", testInputArray[i]);
 	}
@@ -112,4 +115,3 @@ int main(void)
 
 	return 0;
 }
-	
