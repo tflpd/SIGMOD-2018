@@ -1,16 +1,18 @@
-MAIN = main.o
-OUTMAIN = main
-HEADER = 
+OBJS = main.o functions.o
+SOURCE = main.c functions.c
+HEADER = structs.h
+OUT = project
 CC = gcc
-FLAGS  = -g -c
+FLAGS = -g -c
 
-all: $(OUTMAIN)
-
-$(OUTMAIN): $(MAIN)
-	$(CC) -g $(MAIN) -o $@
+$(OUT): $(OBJS)
+	$(CC) -g $(OBJS) -lm -o $@
 
 main.o: main.c
 	$(CC) $(FLAGS) main.c
 
-clean: 
-	rm -f $(OUTMAIN) $(MAIN)
+functions.o: functions.c
+	$(CC) $(FLAGS) functions.c -lm
+
+clean:
+	rm -rf *.o $(OUT)
