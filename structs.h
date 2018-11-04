@@ -24,6 +24,11 @@ struct index_array{
 	int *bucket;
 };
 
+struct result{
+  struct tuple *tuples;
+  int num_tuples;
+};
+
 int check_args(int, char **, int *, int *);
 
 int create_hist(int ****, int, int);
@@ -45,11 +50,11 @@ void print_psum(int ***, int, int);
 void free_table(struct relation **, int);
 void free_histogram(int ***, int, int);
 void free_chain(int, struct index_array *);
-void free_memory(struct relation **, struct relation **, int, int ***, int ***, 
+void free_memory(struct relation **, struct relation **, int, int ***, int ***,
 	int, struct index_array *);
 
 
-/*** Phase 2 Functions ***/ 
+/*** Phase 2 Functions ***/
 
 int is_prime(int);
 int create_chain(int **, int);
@@ -59,5 +64,7 @@ void print_index_array(int, struct index_array *);
 void get_min(int, int, int ***, int *, int *);
 int get_min_data(int, int, int ***);
 int get_min_index(int, int, int ***);
-
+int create_bucket(int **, int);
+int create_indeces(struct index_array *, struct relation **, int, int ***);
+int H2(int, int);
 #endif //STRUCTS

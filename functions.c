@@ -77,7 +77,7 @@ int create_psum(int ****psum, int buckets, int no){
 
 int create_histograms(int ****hist, int ****psum, int buckets, int no){
 
-	if((create_hist(hist,buckets,no) < 0) || 
+	if((create_hist(hist,buckets,no) < 0) ||
 		(create_psum(psum,buckets,no) < 0))
 		return -1;
 	else
@@ -120,7 +120,7 @@ int create_table(struct relation ***table, int records, int no){
 	return 0;
 }
 
-int create_final_table(struct relation ***final_table, 
+int create_final_table(struct relation ***final_table,
 	struct relation **orig_table, int no){
 
 	*final_table = (struct relation **)malloc(no*sizeof(struct relation *));
@@ -130,7 +130,7 @@ int create_final_table(struct relation ***final_table,
 	}
 
 	for(int i = 0; i < no; i++){
-		
+
 		final_table[0][i] = (struct relation *)malloc(sizeof(struct relation));
 		if(final_table[0][i] == NULL){
 			perror("Memory allocation failed: ");
@@ -155,7 +155,7 @@ int create_final_table(struct relation ***final_table,
 }
 
 // Rearranges the values of the tables according to their bucket
-void rearrange_table(struct relation **table, struct relation **final_table, 
+void rearrange_table(struct relation **table, struct relation **final_table,
 	int ***psum, int buckets, int no){
 
 	for(int i = 0; i < no; i++){
@@ -169,13 +169,13 @@ void rearrange_table(struct relation **table, struct relation **final_table,
 	}
 }
 
-/* Creating the histogram. Each row of it has the hash of the bucket on the 
+/* Creating the histogram. Each row of it has the hash of the bucket on the
    left and the number of appearences on the right */
 void fill_hist(int buckets, struct relation **table, int ***hist, int no){
 
 	for(int i = 0; i < no; i++){
 		for(int j = 0; j < table[i]->num_tuples; j++){
-			
+
 			int hash = table[i]->tuples[j].key % buckets;
 			if(hist[i][hash][0] == -1){
 				hist[i][hash][0] = hash;
@@ -186,7 +186,7 @@ void fill_hist(int buckets, struct relation **table, int ***hist, int no){
 	}
 }
 
-/* Creating the accumulative histogram. Each row has the hash of the bucket 
+/* Creating the accumulative histogram. Each row has the hash of the bucket
    on the left and the base of the bucket on the right */
 void fill_psum(int ***hist, int ***psum, int buckets, int no){
 
@@ -202,7 +202,7 @@ void fill_psum(int ***hist, int ***psum, int buckets, int no){
 	}
 }
 
-void fill_histograms(struct relation **table, int ***hist, int ***psum,int no, 
+void fill_histograms(struct relation **table, int ***hist, int ***psum,int no,
 	int buckets){
 
 	fill_hist(buckets,table,hist,no);
@@ -232,7 +232,7 @@ void print_hist(int ***hist, int buckets, int no){
 			printf("hist[1] for bucket[%d]: %d\n",j,hist[i][j][1]);
 		}
 		printf("\n\n");
-	}	
+	}
 }
 
 // Prints the values of every psum histogram
@@ -273,8 +273,8 @@ void free_chain(int buckets, struct index_array *my_array){
 }
 
 // Frees every piece of memory that we previously allocated
-void free_memory(struct relation **table, struct relation **final_table, 
-	int buckets, int ***hist, int ***psum, int no, 
+void free_memory(struct relation **table, struct relation **final_table,
+	int buckets, int ***hist, int ***psum, int no,
 	struct index_array *my_array){
 
 	free_table(table,no);
@@ -287,23 +287,23 @@ void free_memory(struct relation **table, struct relation **final_table,
 
 // Checks whether the provided number is a prime or not
 int is_prime(int num){
-     
-     if(num <= 1) 
+
+     if(num <= 1)
      	return 0;
-     if(num % 2 == 0 && num > 2) 
+     if(num % 2 == 0 && num > 2)
      	return 0;
-     
+
      for(int i = 3; i < num / 2; i+= 2){
      	if (num % i == 0)
         	return 0;
      }
-     
+
      return 1;
 }
 
 // Creates the chain array for a certain bucket of a table
 int create_chain(int **chain_array, int chain_size){
-	
+
 	*chain_array = (int *)malloc(chain_size*sizeof(int));
 	if(*chain_array == NULL){
 		perror("Memory allocation failed: ");
@@ -314,6 +314,18 @@ int create_chain(int **chain_array, int chain_size){
 		chain_array[0][i] = -1;
 }
 
+int create_bucket(int **bucket_array, int bucket_size){
+
+	*bucket_array = (int *)malloc(bucket_size*sizeof(int));
+	if(*bucket_array == NULL){
+		perror("Memory allocation failed: ");
+		return -1;
+	}
+
+	for(int i = 0; i < bucket_size; i++){
+		bucket_array[0][i] = -1;
+	}
+}
 // Finds the right size for the bucket array.
 int get_bucket_size(int size_of_bucket){
 
@@ -325,7 +337,9 @@ int get_bucket_size(int size_of_bucket){
 
 	return i;
 }
-
+int H2(int data_value, int bucket_size){
+	return data_value%bucket_size;
+}
 // Creates the array which takes us to the indexes of each set of buckets
 int create_index_array(struct index_array **my_array, int buckets, int no,
 	int ***hist){
@@ -337,7 +351,7 @@ int create_index_array(struct index_array **my_array, int buckets, int no,
 	}
 
 	for(int i = 0; i < buckets; i++){
-		
+
 		/* The above values will remain the same only if the bucket,
 		   whose index is bucket_index, doesn't have any values */
 		my_array[0][i].table_index = get_min_index(no,i,hist);
@@ -345,12 +359,12 @@ int create_index_array(struct index_array **my_array, int buckets, int no,
 		my_array[0][i].bucket_size = -1;
 		my_array[0][i].chain = NULL;
 		my_array[0][i].bucket = NULL;
-		
-		
+
+
 		if(my_array[0][i].table_index != -1){
 			if(create_chain(&my_array[0][i].chain,my_array[0][i].total_data+1) < 0)
-				return -1;	
-			
+				return -1;
+
 			int j = my_array[0][i].total_data;
 			while(is_prime(j) == 0)
 				j++;
@@ -363,7 +377,7 @@ int create_index_array(struct index_array **my_array, int buckets, int no,
 
 // Prints all values for each one of the elements of the index array
 void print_index_array(int buckets, struct index_array *my_array){
-	
+
 	for(int i = 0; i < buckets; i++){
 		printf("my_array[%d]: \n",i);
 		printf("* table_index: %d\n",my_array[i].table_index);
@@ -371,7 +385,7 @@ void print_index_array(int buckets, struct index_array *my_array){
 		printf("* bucket_size: %d\n",my_array[i].bucket_size);
 		printf("* chain: %p\n",my_array[i].chain);
 		printf("* bucket: %p\n\n",my_array[i].bucket);
-	}	
+	}
 }
 
 void get_min(int no, int bucket_index, int ***hist, int *table_index, int *min){
@@ -379,10 +393,10 @@ void get_min(int no, int bucket_index, int ***hist, int *table_index, int *min){
 	int min_value;
 	int min_table;
 	int has_min_value = 0;
-	
+
 	// Traverse each one the hist histograms
 	for(int i = 0; i < no; i++){
-		
+
 		if(!has_min_value && hist[i][bucket_index][1] != 0) {
 			has_min_value = 1;
 			min_value = hist[i][bucket_index][1];
@@ -412,10 +426,10 @@ int get_min_data(int no, int bucket_index, int ***hist){
 	int min_value;
 	int min_table;
 	int has_min_value = 0;
-	
+
 	// Traverse each one the hist histograms
 	for(int i = 0; i < no; i++){
-		
+
 		if(!has_min_value && hist[i][bucket_index][1] != 0) {
 			has_min_value = 1;
 			min_value = hist[i][bucket_index][1];
@@ -428,9 +442,9 @@ int get_min_data(int no, int bucket_index, int ***hist){
 		}
 	}
 
-	/* All of the buckets with index = bucket_index don't have 
+	/* All of the buckets with index = bucket_index don't have
 	   any data in them */
-	if(!has_min_value)	
+	if(!has_min_value)
 		min_value = -1;
 
 	return min_value;
@@ -443,10 +457,10 @@ int get_min_index(int no, int bucket_index, int ***hist){
 	int min_value;
 	int min_table;
 	int has_min_value = 0;
-	
+
 	// Traverse each one the hist histograms
 	for(int i = 0; i < no; i++){
-		
+
 		if(!has_min_value && hist[i][bucket_index][1] != 0) {
 			has_min_value = 1;
 			min_value = hist[i][bucket_index][1];
@@ -459,10 +473,28 @@ int get_min_index(int no, int bucket_index, int ***hist){
 		}
 	}
 
-	/* All of the buckets with index = bucket_index don't have 
+	/* All of the buckets with index = bucket_index don't have
 	   any data in them */
 	if(!has_min_value)
 		min_table = -1;
 
 	return min_table;
+}
+
+int create_indeces(struct index_array *my_array, struct relation **final_table, int buckets, int ***psum){
+
+	for(int i = 0; i < buckets; i++){
+		if(my_array[i].table_index < 0){
+			continue;}
+		int j = psum[my_array[i].table_index][i][1] -1;
+		int z = j + my_array[i].total_data -1;
+		printf("table index %d\n",my_array[i].table_index );
+		printf("z %d j %d\n", z, j);
+		for(; z>=j; z--){
+			int hash_arg = final_table[my_array[i].table_index]->tuples[z].key;
+			int hash_value = H2(hash_arg, my_array[i].bucket_size);
+			printf("hash value %d 1st %d 2nd %d\n", hash_value, hash_arg, my_array[i].bucket_size );
+		}
+
+	}
 }
