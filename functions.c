@@ -86,6 +86,9 @@ int create_histograms(int ****hist, int ****psum, int buckets, int no){
 
 int create_table(struct relation ***table, int records, int no){
 
+	long curtime = time(NULL);
+	srand((unsigned int)curtime);
+
 	*table = (struct relation **)malloc(no*sizeof(struct relation *));
 	if(*table == NULL){
 		perror("Memory allocation failed: ");
@@ -99,8 +102,8 @@ int create_table(struct relation ***table, int records, int no){
 			return -1;
 		}
 
-		table[0][i]->num_tuples = records;
-		table[0][i]->tuples = (struct tuple *)malloc(records*
+		table[0][i]->num_tuples = ((rand()%10/*00*/)+1);/*records*/;
+		table[0][i]->tuples = (struct tuple *)malloc(table[0][i]->num_tuples/*records*/*
 			sizeof(struct tuple));
 
 		if(table[0][i]->tuples == NULL){
@@ -108,7 +111,7 @@ int create_table(struct relation ***table, int records, int no){
 			return -1;
 		}
 
-		for(int j = 0; j < records; j++){
+		for(int j = 0; j < table[0][i]->num_tuples/*records*/; j++){
 			table[0][i]->tuples[j].key = rand()%records;
 			table[0][i]->tuples[j].payload = 0;
 		}
@@ -262,12 +265,204 @@ void free_histogram(int ***histogram, int no, int buckets){
 	free(histogram);
 }
 
+void free_chain(int buckets, struct index_array *my_array){
+	for(int i = 0; i < buckets; i++){
+		if(my_array[i].chain != NULL)
+			free(my_array[i].chain);
+	}
+}
+
 // Frees every piece of memory that we previously allocated
 void free_memory(struct relation **table, struct relation **final_table, 
-	int buckets, int ***hist, int ***psum, int no){
+	int buckets, int ***hist, int ***psum, int no, 
+	struct index_array *my_array){
 
 	free_table(table,no);
 	free_table(final_table,no);
 	free_histogram(hist,no,buckets);
 	free_histogram(psum,no,buckets);
+	free_chain(buckets,my_array);
+	free(my_array);
+}
+
+// Checks whether the provided number is a prime or not
+int is_prime(int num){
+     
+     if(num <= 1) 
+     	return 0;
+     if(num % 2 == 0 && num > 2) 
+     	return 0;
+     
+     for(int i = 3; i < num / 2; i+= 2){
+     	if (num % i == 0)
+        	return 0;
+     }
+     
+     return 1;
+}
+
+// Creates the chain array for a certain bucket of a table
+int create_chain(int **chain_array, int chain_size){
+	
+	*chain_array = (int *)malloc(chain_size*sizeof(int));
+	if(*chain_array == NULL){
+		perror("Memory allocation failed: ");
+		return -1;
+	}
+
+	for(int i = 0; i < chain_size; i++)
+		chain_array[0][i] = -1;
+}
+
+// Finds the right size for the bucket array.
+int get_bucket_size(int size_of_bucket){
+
+	int i;
+	for(i = size_of_bucket;; i++){
+		if(is_prime(i))
+			break;
+	}
+
+	return i;
+}
+
+// Creates the array which takes us to the indexes of each set of buckets
+int create_index_array(struct index_array **my_array, int buckets, int no,
+	int ***hist){
+
+	*my_array = (struct index_array *)malloc(buckets*sizeof(struct index_array));
+	if(*my_array == NULL){
+		perror("Memory allocation failed: ");
+		return -1;
+	}
+
+	for(int i = 0; i < buckets; i++){
+		
+		/* The above values will remain the same only if the bucket,
+		   whose index is bucket_index, doesn't have any values */
+		my_array[0][i].table_index = get_min_index(no,i,hist);
+		my_array[0][i].total_data = get_min_data(no,i,hist);
+		my_array[0][i].bucket_size = -1;
+		my_array[0][i].chain = NULL;
+		my_array[0][i].bucket = NULL;
+		
+		
+		if(my_array[0][i].table_index != -1){
+			if(create_chain(&my_array[0][i].chain,my_array[0][i].total_data+1) < 0)
+				return -1;	
+			
+			int j = my_array[0][i].total_data;
+			while(is_prime(j) == 0)
+				j++;
+			my_array[0][i].bucket_size = j;
+		}
+	}
+
+	return 0;
+}
+
+// Prints all values for each one of the elements of the index array
+void print_index_array(int buckets, struct index_array *my_array){
+	
+	for(int i = 0; i < buckets; i++){
+		printf("my_array[%d]: \n",i);
+		printf("* table_index: %d\n",my_array[i].table_index);
+		printf("* total_data: %d\n",my_array[i].total_data);
+		printf("* bucket_size: %d\n",my_array[i].bucket_size);
+		printf("* chain: %p\n",my_array[i].chain);
+		printf("* bucket: %p\n\n",my_array[i].bucket);
+	}	
+}
+
+void get_min(int no, int bucket_index, int ***hist, int *table_index, int *min){
+
+	int min_value;
+	int min_table;
+	int has_min_value = 0;
+	
+	// Traverse each one the hist histograms
+	for(int i = 0; i < no; i++){
+		
+		if(!has_min_value && hist[i][bucket_index][1] != 0) {
+			has_min_value = 1;
+			min_value = hist[i][bucket_index][1];
+			min_table = i;
+		}
+		else if(has_min_value && hist[i][bucket_index][1] < min_value &&
+			hist[i][bucket_index][1] != 0){
+			min_value = hist[i][bucket_index][1];
+			min_table = i;
+		}
+	}
+
+	if(has_min_value == 0){
+		*min = -1;
+		*table_index = -1;
+	}
+	else{
+		*min = min_value;
+		*table_index = min_table;
+	}
+}
+
+/* Compares sets of buckets whose index is the same, in order to find the one
+   with the least data along with the table it belongs to */
+int get_min_data(int no, int bucket_index, int ***hist){
+
+	int min_value;
+	int min_table;
+	int has_min_value = 0;
+	
+	// Traverse each one the hist histograms
+	for(int i = 0; i < no; i++){
+		
+		if(!has_min_value && hist[i][bucket_index][1] != 0) {
+			has_min_value = 1;
+			min_value = hist[i][bucket_index][1];
+			min_table = i;
+		}
+		else if(has_min_value && hist[i][bucket_index][1] < min_value &&
+			hist[i][bucket_index][1] != 0){
+			min_value = hist[i][bucket_index][1];
+			min_table = i;
+		}
+	}
+
+	/* All of the buckets with index = bucket_index don't have 
+	   any data in them */
+	if(!has_min_value)	
+		min_value = -1;
+
+	return min_value;
+}
+
+/* Returns the index of the table whose bucket_index bucket has
+   the least elements */
+int get_min_index(int no, int bucket_index, int ***hist){
+
+	int min_value;
+	int min_table;
+	int has_min_value = 0;
+	
+	// Traverse each one the hist histograms
+	for(int i = 0; i < no; i++){
+		
+		if(!has_min_value && hist[i][bucket_index][1] != 0) {
+			has_min_value = 1;
+			min_value = hist[i][bucket_index][1];
+			min_table = i;
+		}
+		else if(has_min_value && hist[i][bucket_index][1] < min_value &&
+			hist[i][bucket_index][1]){
+			min_value = hist[i][bucket_index][1];
+			min_table = i;
+		}
+	}
+
+	/* All of the buckets with index = bucket_index don't have 
+	   any data in them */
+	if(!has_min_value)
+		min_table = -1;
+
+	return min_table;
 }
