@@ -154,6 +154,37 @@ int create_final_table(struct relation ***final_table,
 	return 0;
 }
 
+// Copies the psum array of every table
+int copy_psum(int ****psum_copy, int ***psum, int buckets, int no){
+
+	*psum_copy = (int ***)malloc(no*sizeof(int ***));
+	if(*psum_copy == NULL){
+		perror("Memory allocation failed: ");
+		return -1;
+	}
+
+	for(int i = 0; i < no; i++){
+		psum_copy[0][i] = (int **)malloc(buckets*sizeof(int *));
+		if(psum_copy[0][i] == NULL){
+			perror("Memory allocation failed: ");
+			return -1;
+		}
+
+		for(int j = 0; j < buckets; j++){
+			psum_copy[0][i][j] = (int *)malloc(2*sizeof(int));
+			if(psum_copy[0][i][j] == NULL){
+				perror("Memory allocation failed: ");
+				return -1;
+			}
+
+			psum_copy[0][i][j][0] = psum[i][j][0];
+			psum_copy[0][i][j][1] = psum[i][j][1];
+		}
+	}
+
+	return 0;
+}
+
 // Rearranges the values of the tables according to their bucket
 void rearrange_table(struct relation **table, struct relation **final_table,
 	int ***psum, int buckets, int no){
@@ -272,16 +303,36 @@ void free_chain(int buckets, struct index_array *my_array){
 	}
 }
 
+void free_bucket(int buckets, struct index_array *my_array){
+	for(int i = 0; i < buckets; i++){
+		if(my_array[i].bucket != NULL)
+			free(my_array[i].bucket);
+	}
+}
+
+void free_match(int **match, int buckets){
+
+	for(int i = 0; i < buckets; i++){
+		if(match[i] != NULL)
+			free(match[i]);
+	}
+
+	free(match);
+}
+
 // Frees every piece of memory that we previously allocated
 void free_memory(struct relation **table, struct relation **final_table,
-	int buckets, int ***hist, int ***psum, int no,
-	struct index_array *my_array){
+	int buckets, int ***hist, int ***psum, int ***psum_copy, int no,
+	struct index_array *my_array, int **match){
 
 	free_table(table,no);
 	free_table(final_table,no);
 	free_histogram(hist,no,buckets);
 	free_histogram(psum,no,buckets);
+	free_histogram(psum_copy,no,buckets);
 	free_chain(buckets,my_array);
+	free_bucket(buckets,my_array);
+	free_match(match,buckets);
 	free(my_array);
 }
 
@@ -322,10 +373,10 @@ int create_bucket(int **bucket_array, int bucket_size){
 		return -1;
 	}
 
-	for(int i = 0; i < bucket_size; i++){
+	for(int i = 0; i < bucket_size; i++)
 		bucket_array[0][i] = -1;
-	}
 }
+
 // Finds the right size for the bucket array.
 int get_bucket_size(int size_of_bucket){
 
@@ -337,9 +388,11 @@ int get_bucket_size(int size_of_bucket){
 
 	return i;
 }
+
 int H2(int data_value, int bucket_size){
 	return data_value%bucket_size;
 }
+
 // Creates the array which takes us to the indexes of each set of buckets
 int create_index_array(struct index_array **my_array, int buckets, int no,
 	int ***hist){
@@ -360,7 +413,7 @@ int create_index_array(struct index_array **my_array, int buckets, int no,
 		my_array[0][i].chain = NULL;
 		my_array[0][i].bucket = NULL;
 
-
+		// At least one bucket whose index is i, has been created
 		if(my_array[0][i].table_index != -1){
 			if(create_chain(&my_array[0][i].chain,my_array[0][i].total_data+1) < 0)
 				return -1;
@@ -369,6 +422,9 @@ int create_index_array(struct index_array **my_array, int buckets, int no,
 			while(is_prime(j) == 0)
 				j++;
 			my_array[0][i].bucket_size = j;
+
+			if(create_bucket(&my_array[0][i].bucket,my_array[0][i].bucket_size) < 0)
+				return -1;
 		}
 	}
 
@@ -481,20 +537,100 @@ int get_min_index(int no, int bucket_index, int ***hist){
 	return min_table;
 }
 
-int create_indeces(struct index_array *my_array, struct relation **final_table, int buckets, int ***psum){
+// Allocates the necessary memory for the match structure
+int create_match(int ***match, int buckets, struct index_array *my_array){
+
+	*match = (int **)malloc(buckets*sizeof(int *));
+	if(*match == NULL){
+		perror("Memory allocation failed: ");
+		return -1;
+	}
 
 	for(int i = 0; i < buckets; i++){
-		if(my_array[i].table_index < 0){
-			continue;}
-		int j = psum[my_array[i].table_index][i][1] -1;
-		int z = j + my_array[i].total_data -1;
-		printf("table index %d\n",my_array[i].table_index );
-		printf("z %d j %d\n", z, j);
-		for(; z>=j; z--){
-			int hash_arg = final_table[my_array[i].table_index]->tuples[z].key;
-			int hash_value = H2(hash_arg, my_array[i].bucket_size);
-			printf("hash value %d 1st %d 2nd %d\n", hash_value, hash_arg, my_array[i].bucket_size );
+
+		// This bucket doesn't exist
+		if(my_array[i].chain == NULL)
+			match[0][i] = NULL;
+		else{
+			match[0][i] = (int *)malloc(my_array[i].total_data*sizeof(int));
+			if(match[0][i] == NULL){
+				perror("Memory allocation failed: ");
+				return -1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+int fill_indeces(int buckets, struct index_array *my_array, int ***psum, 
+	struct relation **final_table, int **bucket_copy, int **match){
+
+	// Iterate the buckets
+	for(int i = 0; i < buckets; i++){
+		
+		/* We won't be creating an index for this bucket, 
+		   because it doesn't have any data */
+		if(my_array[i].chain == NULL)
+			continue;
+		
+		printf("Working on bucket[%d]\n",i);
+
+		int current_table = my_array[i].table_index;
+		int start_index = psum[current_table][i][1];
+		int end_index = start_index + my_array[i].total_data - 1;
+
+		/* Matching the indeces of each value of the bucket to the indeces of
+		   the match array */
+		int tmp = start_index;
+		for(int z = 0; z < my_array[i].total_data; z++){
+			match[i][z] = tmp;
+			tmp++;
 		}
 
+		// We will be working with a copy of the bucket
+		*bucket_copy = (int *)malloc(my_array[i].total_data*sizeof(int));
+		if(*bucket_copy == NULL){
+			perror("Memory allocation failed: ");
+			return -1;
+		}
+		
+		int current_index = my_array[i].total_data - 1;
+		
+		// Iterate the data of the bucket and copy it
+		for(int j = end_index; j >= start_index; j--){
+			int value = final_table[current_table][0].tuples[j].key;
+			bucket_copy[0][current_index] = value;
+			current_index--;
+		}
+
+		/*** DOES NOT WORK PROPERLY ***/
+
+		/* Iterate the data of the bucket in descending order to fill both of 
+		   the chain and bucket arrays */
+		for(int j = my_array[i].total_data - 1; j >= 0; j--){
+			
+			int hash_value = bucket_copy[0][j] % my_array[i].bucket_size;
+
+			// First time we've come across this hash value
+			if(my_array[i].bucket[hash_value] == -1){
+
+				my_array[i].bucket[hash_value] = j+1;
+				my_array[i].chain[j+1] = 0;
+			}
+			else{
+
+				int index_to_chain = my_array[i].bucket[hash_value];
+
+				while(my_array[i].chain[index_to_chain] != 0){
+					index_to_chain = my_array[i].chain[index_to_chain];
+				}
+
+				my_array[i].chain[index_to_chain] = j+1;
+			}
+		}	
+
+		free(*bucket_copy);
 	}
+	return 0;
 }

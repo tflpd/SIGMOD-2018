@@ -12,6 +12,12 @@ int main(int argc, char **argv)
 	int ***histogramArray;
 	int ***accumulativeHistogramArray;
 
+	int ***psum_copy;
+
+	int *bucket_copy; //used for creating copies of buckets
+
+	int **match; //used to match copies of buckets to the actual bucket
+
 	struct relation **testInputArray;
 	struct relation **finalArray;
 
@@ -49,8 +55,14 @@ int main(int argc, char **argv)
 	fill_histograms(testInputArray,histogramArray,accumulativeHistogramArray,2,
 		buckets);
 	// printf("*** 4 ***\n");
-	print_hist(histogramArray,buckets,2);
-	print_psum(accumulativeHistogramArray,buckets,2);
+	// print_hist(histogramArray,buckets,2);
+	// print_psum(accumulativeHistogramArray,buckets,2);
+
+	if(copy_psum(&psum_copy,accumulativeHistogramArray,buckets,2) < 0)
+		return -1;
+
+	// printf("Copy of psum\n");
+	// print_psum(psum_copy,buckets,2);
 
 	//Creating the reordered array
 	rearrange_table(testInputArray,finalArray,accumulativeHistogramArray,
@@ -58,18 +70,34 @@ int main(int argc, char **argv)
 	// printf("*** 5 ***\n");
 	print_table(finalArray,2);
 
-
 	/*** PHASE 2 ***/
 
 	if(create_index_array(&my_array,buckets,2,histogramArray) < 0)
 		return -1;
-	print_index_array(buckets,my_array);
-	create_indeces(my_array, finalArray, buckets, accumulativeHistogramArray);
+	// print_index_array(buckets,my_array);
+	
+	if(create_match(&match,buckets,my_array) < 0)
+		return -1;
+	
+	if(fill_indeces(buckets,my_array,psum_copy,finalArray,&bucket_copy,match) < 0)
+		return -1;
 
+	// for(int i = 0; i < buckets; i++){
+
+	// 	if(my_array[i].chain != NULL){
+
+	// 		printf("Chain of bucket[%d]: \n",i);
+	// 		for(int j = 0; j < my_array[i].total_data+1; j++){
+	// 			printf("chain[%d]: %d\n",j,my_array[i].chain[j]);
+	// 		}
+	// 		printf("\n");
+	// 	}
+
+	// }
 
 	//Freeing the allocated memory
-	free_memory(testInputArray,finalArray,buckets,&histogramArray[0],
-		&accumulativeHistogramArray[0],2,my_array);
+	free_memory(testInputArray,finalArray,buckets,histogramArray,
+		accumulativeHistogramArray,psum_copy,2,my_array,match);
 
 	return 0;
 }
