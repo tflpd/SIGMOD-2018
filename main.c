@@ -11,6 +11,15 @@ int main(int argc, char **argv)
 	int buckets;
 	int ***histogramArray;
 	int ***accumulativeHistogramArray;
+
+	/*THEWRITIKI KLISI LISTAS
+	na ginei include arxika to arxio
+	struct my_list* list;
+	list = list_init(ARITHMOS TUPLE ANA NODE SE ARITMISI APO 0);
+	list = add_to_buff(list, NEO TUPLE POY THELW NA PROSTETHEI);
+	print_list(list);
+	delete_list(list);
+	*/
 	
 	struct relation **testInputArray;
 	struct relation **finalArray;
