@@ -389,10 +389,6 @@ int get_bucket_size(int size_of_bucket){
 	return i;
 }
 
-int H2(int data_value, int bucket_size){
-	return data_value%bucket_size;
-}
-
 // Creates the array which takes us to the indexes of each set of buckets
 int create_index_array(struct index_array **my_array, int buckets, int no,
 	int ***hist){
@@ -563,6 +559,7 @@ int create_match(int ***match, int buckets, struct index_array *my_array){
 	return 0;
 }
 
+// Fills in both of the chain and bucket arrays of each index
 int fill_indeces(int buckets, struct index_array *my_array, int ***psum, 
 	struct relation **final_table, int **bucket_copy, int **match){
 
@@ -574,8 +571,6 @@ int fill_indeces(int buckets, struct index_array *my_array, int ***psum,
 		if(my_array[i].chain == NULL)
 			continue;
 		
-		printf("Working on bucket[%d]\n",i);
-
 		int current_table = my_array[i].table_index;
 		int start_index = psum[current_table][i][1];
 		int end_index = start_index + my_array[i].total_data - 1;
@@ -604,33 +599,51 @@ int fill_indeces(int buckets, struct index_array *my_array, int ***psum,
 			current_index--;
 		}
 
-		/*** DOES NOT WORK PROPERLY ***/
-
-		/* Iterate the data of the bucket in descending order to fill both of 
+		/* Iterate the data of the bucket, in descending order, to fill both of 
 		   the chain and bucket arrays */
 		for(int j = my_array[i].total_data - 1; j >= 0; j--){
 			
 			int hash_value = bucket_copy[0][j] % my_array[i].bucket_size;
 
-			// First time we've come across this hash value
 			if(my_array[i].bucket[hash_value] == -1){
-
 				my_array[i].bucket[hash_value] = j+1;
-				my_array[i].chain[j+1] = 0;
+				my_array[i].chain[my_array[i].bucket[hash_value]] = 0;
 			}
 			else{
+				int index_in_chain = my_array[i].bucket[hash_value];
 
-				int index_to_chain = my_array[i].bucket[hash_value];
-
-				while(my_array[i].chain[index_to_chain] != 0){
-					index_to_chain = my_array[i].chain[index_to_chain];
+				while(my_array[i].chain[index_in_chain] != 0){
+					index_in_chain = my_array[i].chain[index_in_chain];
 				}
 
-				my_array[i].chain[index_to_chain] = j+1;
+				my_array[i].chain[index_in_chain] = j+1;
+				my_array[i].chain[j+1] = 0;
 			}
 		}	
 
 		free(*bucket_copy);
 	}
 	return 0;
+}
+
+void print_chain(int buckets, struct index_array *my_array){
+
+	for(int i = 0; i < buckets; i++){
+		if(my_array[i].chain != NULL){
+			printf("Chain array of bucket[%d]  \n",i);
+			for(int j = 0; j < my_array[i].total_data+1; j++)
+				printf("[%d]: %d\n",j,my_array[i].chain[j]);
+		}
+	}
+}
+
+void print_bucket(int buckets, struct index_array *my_array){
+
+	for(int i = 0; i < buckets; i++){
+		if(my_array[i].bucket != NULL){
+			printf("Bucket array of bucket[%d]  \n",i);
+			for(int j = 0; j < my_array[i].bucket_size; j++)
+				printf("[%d]: %d\n",j,my_array[i].bucket[j]);
+		}
+	}
 }

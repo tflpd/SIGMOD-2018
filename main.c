@@ -82,19 +82,10 @@ int main(int argc, char **argv)
 	if(fill_indeces(buckets,my_array,psum_copy,finalArray,&bucket_copy,match) < 0)
 		return -1;
 
-	// for(int i = 0; i < buckets; i++){
-
-	// 	if(my_array[i].chain != NULL){
-
-	// 		printf("Chain of bucket[%d]: \n",i);
-	// 		for(int j = 0; j < my_array[i].total_data+1; j++){
-	// 			printf("chain[%d]: %d\n",j,my_array[i].chain[j]);
-	// 		}
-	// 		printf("\n");
-	// 	}
-
-	// }
-
+	// print_chain(buckets,my_array);
+	// printf("\n");
+	// print_bucket(buckets,my_array);
+	
 	//Freeing the allocated memory
 	free_memory(testInputArray,finalArray,buckets,histogramArray,
 		accumulativeHistogramArray,psum_copy,2,my_array,match);

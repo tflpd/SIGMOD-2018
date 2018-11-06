@@ -78,5 +78,7 @@ int get_min_index(int, int, int ***);
 int create_match(int ***, int, struct index_array *);
 int fill_indeces(int, struct index_array *, int ***, struct relation **, int **, int **);
 
-int H2(int, int);
+void print_chain(int, struct index_array *);
+void print_bucket(int, struct index_array *);
+
 #endif //STRUCTS
