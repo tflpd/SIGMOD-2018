@@ -1,17 +1,19 @@
 #include "structs.h"
 
-/* Considering n as 8 we ll use 2^10 records so we ll have around 3 records per
-one of hte 2^8 buckets */
-#define RECORDSNUM 10//24
-// #define BUCKETSNUM 256 // Should be given as an argument, since it can change
+#define RECORDSNUM 100//1024
 
-int main(int argc, char **argv)
-{
-	int N;
-	int buckets;
-	int ***histogramArray;
-	int ***accumulativeHistogramArray;
+int main(int argc, char **argv){
 
+	int N;			// The exponent
+	int buckets;	// The total number of buckets (=2^N)
+	
+	int **hist;		// Pointer to the hist arrays
+	int **psum;		// Pointer to the psum arrays
+
+	struct relation **testInputArray;
+	struct relation **finalArray;
+
+	struct index_array *my_array;
 
 	/*THEWRITIKI KLISI LISTAS
 	na ginei include arxika to arxio
@@ -21,84 +23,39 @@ int main(int argc, char **argv)
 	print_list(list);
 	delete_list(list);
 	*/
-	
-	int ***psum_copy;
-
-	int *bucket_copy; //used for creating copies of buckets
-
-	int **match; //used to match copies of buckets to the actual bucket
-
-	struct relation **testInputArray;
-	struct relation **finalArray;
-
-	struct index_array *my_array;
 
 	if(check_args(argc,argv,&buckets,&N) < 0)
 		return -1;
 
-
-	/*** PHASE 1 ***/
-
-	// Allocating and initializing both histograms,
-	// two (psum and hist) for each table
-	if(create_histograms(&histogramArray,&accumulativeHistogramArray,
-		buckets,2) < 0)
+	if(allocate_histograms(&hist,&psum,2,buckets) < 0)
 		return -1;
 
-	// printf("*** 1 ***\n");
-
-	// print_hist(histogramArray,buckets,2);
-	// print_psum(accumulativeHistogramArray,buckets,2);
-
-	//Allocating and initializing the test input array
-	if(create_table(&testInputArray,RECORDSNUM, 2) < 0)
-		return -1;
-	// printf("*** 2 ****\n");
-	// print_table(testInputArray,2);
-
-	// Allocating the re-ordered final array
-	if(create_final_table(&finalArray,testInputArray,2) < 0)
-		return -1;
-	// printf("*** 3 ***\n");
-	// print_table(finalArray,2);
-
-	fill_histograms(testInputArray,histogramArray,accumulativeHistogramArray,2,
-		buckets);
-	// printf("*** 4 ***\n");
-	// print_hist(histogramArray,buckets,2);
-	// print_psum(accumulativeHistogramArray,buckets,2);
-
-	if(copy_psum(&psum_copy,accumulativeHistogramArray,buckets,2) < 0)
+	if(allocate_tables(&testInputArray,RECORDSNUM,2) < 0)
 		return -1;
 
-	// printf("Copy of psum\n");
-	// print_psum(psum_copy,buckets,2);
-
-	//Creating the reordered array
-	rearrange_table(testInputArray,finalArray,accumulativeHistogramArray,
-		buckets,2);
-	// printf("*** 5 ***\n");
-	print_table(finalArray,2);
-
-	/*** PHASE 2 ***/
-
-	if(create_index_array(&my_array,buckets,2,histogramArray) < 0)
-		return -1;
-	// print_index_array(buckets,my_array);
-	
-	if(create_match(&match,buckets,my_array) < 0)
-		return -1;
-	
-	if(fill_indeces(buckets,my_array,psum_copy,finalArray,&bucket_copy,match) < 0)
-		return -1;
-
-	print_chain(buckets,my_array);
+	for(int i = 0; i < 2; i++)
+		printf("Table %d has %d records\n",i,testInputArray[i]->num_tuples);
 	printf("\n");
-	print_bucket(buckets,my_array);
+	print_tables(testInputArray,2);
 	
-	//Freeing the allocated memory
-	free_memory(testInputArray,finalArray,buckets,histogramArray,
-		accumulativeHistogramArray,psum_copy,2,my_array,match);
+	if(allocate_final_tables(&finalArray,testInputArray,2) < 0)
+		return -1;
+	print_tables(finalArray,2);
 
+	fill_histograms(testInputArray,hist,psum,buckets,2);
+	print_hist(hist,2,buckets);
+	print_psum(psum,2,buckets);
+
+	rearrange_tables(2,testInputArray, finalArray,psum,buckets);
+	print_tables(finalArray,2);
+
+	if(allocate_index_array(&my_array,buckets,2,hist) < 0)
+		return -1;
+	print_index_array(buckets,my_array);
+
+	fill_indeces(my_array,buckets,psum,finalArray);
+	print_index_array(buckets,my_array);
+
+	free_memory(&hist,&psum,2,&testInputArray,&finalArray,&my_array,buckets);
 	return 0;
-}
+}	

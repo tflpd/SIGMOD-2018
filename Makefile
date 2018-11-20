@@ -15,4 +15,4 @@ functions.o: functions.c
 	$(CC) $(FLAGS) functions.c -lm
 
 clean:
-	rm -rf *.o $(OUT)
+	rm -rf $(OBJS) $(OUT)
