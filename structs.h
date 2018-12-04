@@ -4,6 +4,7 @@
 #include <time.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 struct tuple {
@@ -25,8 +26,9 @@ struct index_array{
 };
 
 struct result{
-  struct tuple *tuples;
-  int num_tuples;
+  struct tuple *buffer; // Pointer to the first index of the buffer 
+  int elements; // Number of elements in the buffer
+  struct result *next;
 };
 
 int check_args(int, char **, int *, int *);
@@ -59,11 +61,15 @@ void print_hist(int **, int, int);
 void print_psum(int **, int, int);
 void print_tables(struct relation **, int);
 void print_index_array(int, struct index_array *);
+void print_records_no(int, struct relation **);
+void print_welcome_msg(int);
+
+int get_user_input(char **, size_t *);
 
 void free_histograms(int ***, int ***, int);
 void free_tables(struct relation ***, struct relation ***,int);
 void free_indeces(struct index_array **, int);
 void free_memory(int ***, int ***, int, struct relation ***, 
-  struct relation ***, struct index_array **, int);
+  struct relation ***, struct index_array **, int, char **);
 
 #endif
