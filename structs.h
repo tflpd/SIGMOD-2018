@@ -31,6 +31,22 @@ struct result{
   struct result *next;
 };
 
+// A list node
+struct lnode {
+  int32_t key; // They key/id of that node
+  struct tuple* buffer; // The buffer to be filled with tuples
+  int32_t counter; // Counter of the current tuples in the buffer
+  struct lnode *next; // Pointer to the next list node
+};
+
+// A list struct
+struct my_list {
+  struct lnode* head; // Pointer to the first node of the list
+  struct lnode* current; // Pointer to the first node of the list
+  int32_t nodes_counter; // Counter of the nodes of the list
+  int32_t buffer_max_cap; // Max number of tuples that should fit in each node
+};
+
 int check_args(int, char **, int *, int *);
 int allocate_hist(int **, int);
 int allocate_psum(int **, int);

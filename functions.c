@@ -496,7 +496,19 @@ int get_user_input(char **input, size_t *n){
 		// The user wants to retrieve certain data
 		if(strncmp(*input,"Query",strlen("Query")) == 0){
 
-			printf("Enter the query/-ies: ");
+			printf("Enter the query/-ies file name: ");
+			char *queriesFileName = NULL;
+			size_t qsize = 0;
+			FILE *fin = NULL;
+			if(getline(&queriesFileName,&qsize,stdin) != -1){
+				printf("File to be executed:%s\n", queriesFileName);
+				fin = fopen(strtok(queriesFileName,"\n"),"r");
+				if (fin == NULL)
+				{
+					perror("Queries file opening failed:");
+					return -1;
+				}
+			}
 
 			/* Variables for the following getline() function.
 			   They are initialized with NULL and 0 respectively, 
@@ -511,7 +523,9 @@ int get_user_input(char **input, size_t *n){
 
 			   0 2 4|0.1=1.2&1.0=2.1&0.1>3000|0.0 1.1 */
 
-			while(getline(&query,&n1,stdin) != -1){
+			int numQueries = 0;
+
+			while(getline(&query,&n1,fin) != -1){
 
 				// The user wants to stop providing us with queries
 				if(strncmp(query,"F",strlen("F")) == 0){
@@ -811,10 +825,13 @@ int get_user_input(char **input, size_t *n){
 					free(table_indeces);
 					free(parts);
 					free(query_copy);
+					numQueries++;
 				}
 			}
-
+			printf("Executed %d queries.\n", numQueries);
+			fclose(fin);
 			free(query);
+			free(queriesFileName);
 			print_welcome_msg(0);
 		}
 
