@@ -47,6 +47,20 @@ struct my_list {
   int32_t buffer_max_cap; // Max number of tuples that should fit in each node
 };
 
+struct query {
+  int* table_indeces;
+  int size1;
+  char** filters;
+  int size2;
+  int** projections;
+  int size3;
+};
+
+struct batch {
+  struct query* queries;
+  int numQueries;
+};
+
 int check_args(int, char **, int *, int *);
 int allocate_hist(int **, int);
 int allocate_psum(int **, int);
