@@ -26,10 +26,21 @@ struct index_array{
 };
 
 struct result{
-  struct tuple *buffer; // Pointer to the first index of the buffer 
+  struct tuple *buffer; // Pointer to the first index of the buffer
   int elements; // Number of elements in the buffer
   struct result *next;
 };
+struct column{
+  int table;
+  int column;
+};
+
+struct table{
+  struct relation *my_relation;
+  u_int64_t tuples;
+  u_int64_t columns;
+};
+
 
 // A list node
 struct lnode {
@@ -99,7 +110,7 @@ int get_user_input(char **, size_t *);
 void free_histograms(int ***, int ***, int);
 void free_tables(struct relation ***, struct relation ***,int);
 void free_indeces(struct index_array **, int);
-void free_memory(int ***, int ***, int, struct relation ***, 
+void free_memory(int ***, int ***, int, struct relation ***,
   struct relation ***, struct index_array **, int, char **);
 
 #endif
