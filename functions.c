@@ -484,6 +484,66 @@ void print_welcome_msg(int beginning){
 /*** Communication with the user ***/
 /***********************************/
 
+struct query* create_query(int* table_indeces, int size, char** filters, int size_1, int** sum, int size_2){
+	// Construct a query struct
+	struct query* my_query;
+
+	my_query = malloc(sizeof(struct query));
+	if(my_query == NULL){
+		perror("Memory allocation failed: ");
+		exit(-1);
+	}
+
+	my_query->table_indeces = malloc(sizeof(int)*size);
+	if(my_query->table_indeces == NULL){
+		perror("Memory allocation failed: ");
+		exit(-1);
+	}
+	for (int i = 0; i < size; ++i)
+	{
+		my_query->table_indeces[i] = table_indeces[i];
+	}
+
+	my_query->size1 = size;
+
+	my_query->filters = malloc(sizeof(char *)*size_1);
+	if(my_query->filters == NULL){
+		perror("Memory allocation failed: ");
+		exit(-1);
+	}
+
+	for (int i = 0; i < size_1; ++i)
+	{
+		my_query->filters[i] = malloc(sizeof(char)*(strlen(filters[i])+1));
+		if(my_query->filters[i] == NULL){
+			perror("Memory allocation failed: ");
+			exit(-1);
+		}
+		strcpy(my_query->filters[i], filters[i]);
+	}
+
+	my_query->size2 = size_1;
+
+	my_query->projections = malloc(sizeof(int *)*size_2);
+
+	if(my_query->projections == NULL){
+		perror("Memory allocation failed: ");
+		exit(-1);
+	}
+
+	for (int i = 0; i < size_2; ++i)
+	{
+		my_query->projections[i] = malloc(sizeof(int)*2);
+		if(my_query->projections[i] == NULL){
+			perror("Memory allocation failed: ");
+			exit(-1);
+		}
+		my_query->projections[i][0] = sum[i][0];
+		my_query->projections[i][1] = sum[i][1];
+	}
+	return my_query;
+}
+
 // Responsible for getting and interpreting the input that the user provides
 int get_user_input(char **input, size_t *n){
 
@@ -496,7 +556,19 @@ int get_user_input(char **input, size_t *n){
 		// The user wants to retrieve certain data
 		if(strncmp(*input,"Query",strlen("Query")) == 0){
 
-			printf("Enter the query/-ies: ");
+			printf("Enter the query/-ies file name: ");
+			char *queriesFileName = NULL;
+			size_t qsize = 0;
+			FILE *fin = NULL;
+			if(getline(&queriesFileName,&qsize,stdin) != -1){
+				printf("File to be executed:%s\n", queriesFileName);
+				fin = fopen(strtok(queriesFileName,"\n"),"r");
+				if (fin == NULL)
+				{
+					perror("Queries file opening failed:");
+					return -1;
+				}
+			}
 
 			/* Variables for the following getline() function.
 			   They are initialized with NULL and 0 respectively, 
@@ -511,15 +583,20 @@ int get_user_input(char **input, size_t *n){
 
 			   0 2 4|0.1=1.2&1.0=2.1&0.1>3000|0.0 1.1 */
 
-			while(getline(&query,&n1,stdin) != -1){
+			int numQueries = 0;
+
+			struct batch* my_batch;
+			my_batch = malloc(sizeof(struct batch));
+			my_batch->queries = NULL;
+			my_batch->numQueries = 0;
+
+			while(getline(&query,&n1,fin) != -1){
 
 				// The user wants to stop providing us with queries
 				if(strncmp(query,"F",strlen("F")) == 0){
 					printf("We're done with accepting queries.\n");
 					break;
-				}
-
-				else{
+				}else{
 
 					/* We must split the given query into its three parts.
 					   Since we'll be using the strtok() function, we must
@@ -796,6 +873,19 @@ int get_user_input(char **input, size_t *n){
 					// 	printf("sum[%d][1]: %d\n",i,sum[i][1]);
 					// }
 
+					// Merge the information into query struct
+					struct query* my_query;
+					my_query = create_query(table_indeces, size, filters, size_1, sum, size_2);
+					// Add that struct into the current batch
+					my_batch->queries = realloc(my_batch->queries, sizeof(struct query*)*(my_batch->numQueries + 1));
+					if(my_batch->queries == NULL){
+						perror("Memory reallocation failed: ");
+						return -1;
+					}
+					my_batch->numQueries++;
+					my_batch->queries[my_batch->numQueries] = *my_query;
+
+
 					// Freeing every piece of memory that we allocated.
 					for(int i = 0; i < size_1; i++)
 						free(filters[i]);
@@ -811,10 +901,13 @@ int get_user_input(char **input, size_t *n){
 					free(table_indeces);
 					free(parts);
 					free(query_copy);
+					numQueries++;
 				}
 			}
-
+			printf("Executed %d queries.\n", numQueries);
+			fclose(fin);
 			free(query);
+			free(queriesFileName);
 			print_welcome_msg(0);
 		}
 

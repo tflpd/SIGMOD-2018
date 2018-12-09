@@ -32,7 +32,7 @@ int main(int argc, char **argv){
 		return -1;
 
 	print_records_no(2,testInputArray);
-	// print_tables(testInputArray,2);
+	print_tables(testInputArray,2);
 	
 	if(allocate_final_tables(&finalArray,testInputArray,2) < 0)
 		return -1;
@@ -43,18 +43,18 @@ int main(int argc, char **argv){
 	// print_psum(psum,2,buckets);
 
 	rearrange_tables(2,testInputArray, finalArray,psum,buckets);
-	// print_tables(finalArray,2);
+	print_tables(finalArray,2);
 
 	if(allocate_index_array(&my_array,buckets,2,hist) < 0)
 		return -1;
 	// print_index_array(buckets,my_array);
 
 	fill_indeces(my_array,buckets,psum,finalArray);
-	// print_index_array(buckets,my_array);
+	print_index_array(buckets,my_array);
 	
 	// Getting input from the user
-	if(get_user_input(&input,&n) < 0)
-		return -1;
+	//if(get_user_input(&input,&n) < 0)
+	//	return -1;
 
 	// Releasing memory
 	free_memory(&hist,&psum,2,&testInputArray,&finalArray,&my_array,buckets,
