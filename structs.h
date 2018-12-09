@@ -41,6 +41,11 @@ struct table{
   u_int64_t columns;
 };
 
+struct middle_table{
+  int *participants;
+  int **rows_id;
+};
+
 
 int check_args(int, char **, int *, int *);
 int allocate_hist(int **, int);
