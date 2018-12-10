@@ -44,6 +44,7 @@ struct table{
 struct middle_table{
   int *participants;
   int **rows_id;
+  int numb_of_parts;
 };
 
 
@@ -117,5 +118,7 @@ void free_tables(struct relation ***, struct relation ***,int);
 void free_indeces(struct index_array **, int);
 void free_memory(int ***, int ***, int, struct relation ***,
   struct relation ***, struct index_array **, int, char **);
-
+struct middle_table * create_middle_table(int );
+int find_relation(int relation, int *, int)
+void insert_to_middle(struct middle_table *, int, int);
 #endif
