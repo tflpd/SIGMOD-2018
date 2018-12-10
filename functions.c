@@ -1004,10 +1004,7 @@ int find_relation(int relation, int *r_array, int size)
 void insert_to_middle(struct middle_table *middle, struct table *table, int size, int relation1, int relation2, int c1, int c2)
 
 {
-		if ()
-		for(int i=0; i<size; i++)
-		{
 
-		}
-		middle[1].rowsid[0] = resuls.rowsr
+
+
 }
