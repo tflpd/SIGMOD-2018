@@ -985,6 +985,7 @@ struct middle_table * create_middle_table(int size)
 	middle = malloc(sizeof(struct middle_table)*size);
 	for (int i=0; i<size; i++)
 	{
+		//participants = NULL;
 		middle[i].numb_of_parts =0;
 	}
 	return middle;
@@ -1004,7 +1005,27 @@ int find_relation(int relation, int *r_array, int size)
 void insert_to_middle(struct middle_table *middle, struct table *table, int size, int relation1, int relation2, int c1, int c2)
 
 {
+		int relation_position;
+		/*first case: first join happened none og the tables ever used
+		No need to Iterate over the table in first case
+		just add the two arrays in middle*/
+		if(middle[0].numb_of_parts == 0)
+		{
+			middle[0].participants = malloc(sizeof(int)*2);
+			middle[0].participants[0] = relation1;
+			middle[0].participants[1] = relation2;
+			middle[0].numb_of_parts = 2;
+			return;
 
+		}
+		//general search for partcipants
+		for (int i=0; i<size; i++)
+		{
+			for(int j=0; j<middle[i].numb_of_parts; j++)
+			{
+
+			}
+		}
 
 
 }
