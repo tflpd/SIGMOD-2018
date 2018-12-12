@@ -1005,7 +1005,9 @@ int find_relation(int relation, int *r_array, int size)
 void insert_to_middle(struct middle_table *middle, struct table *table, int size, int relation1, int relation2, int c1, int c2)
 
 {
-		int relation_position;
+		int relation_position1 = -1, relation_position2 = -1;
+		int first_empty = 0;
+		int flag = 0;
 		/*first case: first join happened none og the tables ever used
 		No need to Iterate over the table in first case
 		just add the two arrays in middle*/
@@ -1021,11 +1023,69 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		//general search for partcipants
 		for (int i=0; i<size; i++)
 		{
-			for(int j=0; j<middle[i].numb_of_parts; j++)
-			{
-
+			//relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)
+			//relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)
+			/*Each relation is going in only one place of our middle array so we dont need to
+			worry about the next itterations*/
+			if(find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)){
+					relation_position1 = i;
 			}
-		}
+			if(find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)){
+					relation_position2 = i;
+			}
+			if(middle[i].numb_of_parts == 0){
+				if(flag == 0){
+					first_empty = i;
+					flag = 1;
+				}
+			}
 
+		}
+		// parsing the middle array ended
+		if(relation_position1 == -1 && relation_position2 ==-1)
+		{
+			//new relations wich means new cell in the middle array
+			middle[first_empty].participants = malloc(sizeof(int)*2);
+			middle[first_empty].participants[0] = relation1;
+			middle[first_empty].participants[1] = relation2;
+			middle[first_empty].numb_of_parts = 2;
+
+		}
+		/*in the following 2 else if statements we check if one of two relations
+		have already participated in the join and we add the other in the same cell*/
+		else if(relation_position1 == -1)
+		{
+			middle[relation_position2].numb_of_parts++;
+			int *temp;
+			int participants = middle[relation_position2].numb_of_parts;
+			temp = malloc(sizeof(int)*middle[relation_position2].numb_of_parts);
+			memcpy(temp, middle[relation_position2].participants, sizeof(int)*(participants-1));
+			free(middle[relation_position2].participants);
+			middle[relation_position2].participants = temp;
+
+		}
+		else if(relation_position2 == -1)
+		{
+			middle[relation_position1].numb_of_parts++;
+			int *temp;
+			int participants = middle[relation_position1].numb_of_parts;
+			temp = malloc(sizeof(int)*middle[relation_position1].numb_of_parts);
+			memcpy(temp, middle[relation_position1].participants, sizeof(int)*(participants-1));
+			free(middle[relation_position1].participants);
+			middle[relation_position1].participants = temp;
+
+		}
+		/*in this case both relations participated in a join
+		and they are in the same cell  */
+		else if(relation_position1 == relation_position2)
+		{
+
+		}
+		/*in this case both relations already participated in a join
+		but they are in different cells of middle table*/
+		else if(relation_position1 != relation_position2)
+		{
+
+		}
 
 }
