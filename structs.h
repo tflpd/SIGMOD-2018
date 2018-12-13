@@ -63,6 +63,7 @@ struct rowIDtuple {
 struct middle_table{
   int *participants;
   int **rows_id;
+  int rows_size;
   int numb_of_parts;
 };
 

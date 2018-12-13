@@ -1350,6 +1350,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		int relation_position1 = -1, relation_position2 = -1;
 		int first_empty = 0;
 		int flag = 0;
+		int position1, position2;
 		/*first case: first join happened none og the tables ever used
 		No need to Iterate over the table in first case
 		just add the two arrays in middle*/
@@ -1370,10 +1371,12 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			/*Each relation is going in only one place of our middle array so we dont need to
 			worry about the next itterations*/
 			if(find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)){
-					relation_position1 = i;
+					position1 = i;
+					relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts);
 			}
 			if(find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)){
 					relation_position2 = i;
+					relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts);
 			}
 			if(middle[i].numb_of_parts == 0){
 				if(flag == 0){
@@ -1392,18 +1395,40 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			middle[first_empty].participants[1] = relation2;
 			middle[first_empty].numb_of_parts = 2;
 
+			//results = RadixJoin(table[relation1].relation[c1],table[relation2].relation[c2]);
+			middle[first_empty].rows_id = malloc(sizeof(int)*2);
+			middle[first_empty].rows_id[0] = malloc(sizeof(int)*results.size);
+			middle[first_empty].rows_id[1] = malloc(sizeof(int)*results.size);
+			memcpy(middle[first_empty].rows_id[0], results.rowsid1, sizeof(int)*results.size);
+			memcpy(middle[first_empty].rows_id[1], results.rowsid2, sizeof(int)*results.size);
+
+
 		}
 		/*in the following 2 else if statements we check if one of two relations
 		have already participated in the join and we add the other in the same cell*/
 		else if(relation_position1 == -1)
 		{
-			middle[relation_position2].numb_of_parts++;
+			struct relation *temp_rel;
+			middle[position2].numb_of_parts++;
 			int *temp;
-			int participants = middle[relation_position2].numb_of_parts;
-			temp = malloc(sizeof(int)*middle[relation_position2].numb_of_parts);
-			memcpy(temp, middle[relation_position2].participants, sizeof(int)*(participants-1));
-			free(middle[relation_position2].participants);
-			middle[relation_position2].participants = temp;
+			int participants = middle[position2].numb_of_parts;
+			temp = malloc(sizeof(int)*middle[position2].numb_of_parts);
+			memcpy(temp, middle[position2].participants, sizeof(int)*(participants-1));
+			free(middle[position2].participants);
+			middle[position2].participants = temp;
+			temp_rel = malloc(sizeof(struct relation));
+			temp_rel->tuples = malloc(sizeof(struct tuple)*middle[position2].rows_size);
+			for(int i=0; i<middle[position2].rows_size; i++)
+			{
+				index = middle[position2].rows_id[relation_position2][i];
+				temp_rel->tuples[i].key = index;
+				temp_rel->tuples[i].payload = table[relation2].my_relation[c2].tuples[index].payload;
+
+			}
+			//results = RadixJoin
+
+
+
 
 		}
 		else if(relation_position2 == -1)
