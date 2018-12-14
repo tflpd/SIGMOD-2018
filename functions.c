@@ -368,7 +368,7 @@ int allocate_hist(int **hist_ptr, int buckets){
 	// Filling in the histogram array with zeros
 	for(int i = 0; i < buckets; i++)
 		hist_ptr[0][i] = 0;
-	
+
 	return 0;
 }
 
@@ -390,7 +390,7 @@ int allocate_psum(int **psum_ptr, int buckets){
 int allocate_histograms(int ***hist, int ***psum, int tables, int buckets){
 
 	/* Allocating memory for a table of pointers. Each pointer points to the
-	   hist array of the corresponding table */ 
+	   hist array of the corresponding table */
 	*hist = (int **)malloc(tables*sizeof(int *));
 	if(*hist == NULL){
 		perror("Memory allocation failed: ");
@@ -405,14 +405,14 @@ int allocate_histograms(int ***hist, int ***psum, int tables, int buckets){
 
 	// Working for one table at a time
 	for(int i = 0; i < tables; i++){
-		if((allocate_hist(&hist[0][i],buckets) < 0) || 
+		if((allocate_hist(&hist[0][i],buckets) < 0) ||
 			allocate_psum(&psum[0][i],buckets) < 0)
 			return -1;
 	}
 
 	return 0;
 }
-	
+
 // Creates a table which has random values
 int allocate_a_table(struct relation **table_ptr, int records){
 
@@ -463,7 +463,7 @@ int allocate_tables(struct relation ***table, int records, int tables){
 
 // Working with one table at a time
 int allocate_a_final_table(struct relation **final_table_ptr, int num_tuples){
-	
+
 	*final_table_ptr = (struct relation *)malloc(sizeof(struct relation));
 	if(*final_table_ptr == NULL){
 		perror("Memory allocation failed: ");
@@ -488,7 +488,7 @@ int allocate_a_final_table(struct relation **final_table_ptr, int num_tuples){
 }
 
 // Allocates memory for the final tables
-int allocate_final_tables(struct relation ***final_table, 
+int allocate_final_tables(struct relation ***final_table,
 	struct relation **input_table, int total_tables){
 
 	*final_table = (struct relation **)malloc(total_tables*
@@ -518,7 +518,7 @@ void fill_hist(struct relation *table, int *hist, int buckets){
 
 // Fills in the psum array of a table with the correct values
 void fill_psum(int *hist, int *psum, int buckets){
-	
+
 	int last = 0;
 
 	for(int i = 0; i < buckets; i++){
@@ -563,7 +563,7 @@ void rearrange_a_table(struct relation *final_table,
 		}
 
 		final_table->tuples[index].key = input_table->tuples[i].key;
-	}	
+	}
 }
 
 void rearrange_tables(int total_tables, struct relation **input_tables,
@@ -578,11 +578,11 @@ void rearrange_tables(int total_tables, struct relation **input_tables,
 /*** Functions for the Indeces ***/
 /*********************************/
 
-/* Compares all of the buckets which have the same index, in order to find the 
+/* Compares all of the buckets which have the same index, in order to find the
    one that has the least amount of data. Then it returns the value
-   that represents the least amount of data along with the index of the table 
+   that represents the least amount of data along with the index of the table
    it belongs to */
-void get_min_data(int total_tables, int bucket_index, int **hist, 
+void get_min_data(int total_tables, int bucket_index, int **hist,
 	int *table_index, int *total_data){
 
 	int min_value;
@@ -669,7 +669,7 @@ int fill_an_index(struct index_array *ptr, int bucket_index, int total_tables,
 	return 0;
 }
 
-int allocate_index_array(struct index_array **my_array, int buckets, 
+int allocate_index_array(struct index_array **my_array, int buckets,
 	int total_tables, int **hist){
 
 	*my_array = (struct index_array *)malloc(buckets*sizeof(struct index_array));
@@ -686,9 +686,9 @@ int allocate_index_array(struct index_array **my_array, int buckets,
 	return 0;
 }
 
-void fill_indeces(struct index_array *my_array, int buckets, int **psum, 
+void fill_indeces(struct index_array *my_array, int buckets, int **psum,
 	struct relation **final_table){
-		
+
 	for(int i = 0; i < buckets; i++){
 
 		// The bucket whose index is (i) doesn't have any data. Move on
@@ -709,21 +709,21 @@ void fill_indeces(struct index_array *my_array, int buckets, int **psum,
 			int hash_value = final_table[current_table]->tuples[j].key % my_array[i].bucket_size;
 
 			/* IMPORTANT NOTE: We have to think of each bucket as an autonomous
-			   array, i.e starting from 0 and ending at total_data - 1. 
+			   array, i.e starting from 0 and ending at total_data - 1.
 			   (Match: actual_index - start_index) */
 
 			// This is the first time we've come across such hash value
 			if(my_array[i].bucket[hash_value] == -1){
 				my_array[i].bucket[hash_value] = ((j+1) - start_index);
 				my_array[i].chain[((j+1) - start_index)] = 0;
-			}	
+			}
 			else{
 
 				int tmp = my_array[i].bucket[hash_value];
 				while(my_array[i].chain[tmp] != 0){
 					tmp = my_array[i].chain[tmp];
 				}
-				
+
 				my_array[i].chain[tmp] = ((j+1) - start_index);
 				my_array[i].chain[((j+1) - start_index)] = 0;
 			}
@@ -741,10 +741,10 @@ void print_hist(int **hist, int tables, int buckets){
 	for(int i = 0; i < tables; i++){
 		for(int j = 0; j < buckets; j++)
 			printf("hist[%d][%d]: %d\n",i,j,hist[i][j]);
-		
+
 		printf("\n");
 	}
-}	
+}
 
 // Prints the psum array of every table
 void print_psum(int **psum, int tables, int buckets){
@@ -752,7 +752,7 @@ void print_psum(int **psum, int tables, int buckets){
 	for(int i = 0; i < tables; i++){
 		for(int j = 0; j < buckets; j++)
 			printf("psum[%d][%d]: %d\n",i,j,psum[i][j]);
-		
+
 		printf("\n");
 	}
 }
@@ -779,7 +779,7 @@ void print_index_array(int buckets, struct index_array *my_array){
 			printf("\n");
 			for(int j = 0; j < (my_array[i].total_data)+1; j++)
 				printf("my_array[%d].chain[%d]: %d\n",i,j,my_array[i].chain[j]);
-		
+
 			printf("\n");
 			for(int j = 0; j < my_array[i].bucket_size; j++)
 				printf("my_array[%d].bucket[%d]: %d\n",i,j,my_array[i].bucket[j]);
@@ -797,7 +797,7 @@ void print_records_no(int tables, struct relation **table){
 
 // Displays a message with all the possible options a user has
 void print_welcome_msg(int beginning){
-	
+
 	if(beginning)
 		printf("Welcome!\n");
 	printf("Please, choose one of the following options:\n");
@@ -874,7 +874,7 @@ int get_user_input(char **input, size_t *n){
 
 	print_welcome_msg(1);
 
-	/* Keep getting input from the user, until he/she decides to exit 
+	/* Keep getting input from the user, until he/she decides to exit
 	   the program */
 	while(getline(input,n,stdin) != -1){
 
@@ -896,15 +896,15 @@ int get_user_input(char **input, size_t *n){
 			}
 
 			/* Variables for the following getline() function.
-			   They are initialized with NULL and 0 respectively, 
-			   so that getline() can allocate the appropriate ammount 
+			   They are initialized with NULL and 0 respectively,
+			   so that getline() can allocate the appropriate ammount
 			   of memory. */
 			char *query = NULL;	// The actual query the user gives
-			size_t n1 = 0;		
-			
+			size_t n1 = 0;
+
 			/* We'll keep accepting queries from the user until he/she types
-			   the letter 'F'. 
-			   Every query consists of three parts and has the following form: 
+			   the letter 'F'.
+			   Every query consists of three parts and has the following form:
 
 			   0 2 4|0.1=1.2&1.0=2.1&0.1>3000|0.0 1.1 */
 
@@ -938,7 +938,7 @@ int get_user_input(char **input, size_t *n){
 					/* We'll store each part individually.
 					   e.g: parts -> parts[0] -> "0 2 4"
 					                 parts[1] -> "0.1=1.2&1.0=2.1&0.1>3000"
-					                 parts[2] -> "0.0 1.1" */  
+					                 parts[2] -> "0.0 1.1" */
 					char **parts;
 					parts = (char **)malloc(3*sizeof(char *));
 					if(parts == NULL){
@@ -951,7 +951,7 @@ int get_user_input(char **input, size_t *n){
 					for(int i = 0; i < 3; i++){
 
 						if(i == 0){
-							parts[i] = strtok(query_copy,"|"); 
+							parts[i] = strtok(query_copy,"|");
 						}
 						else
 							parts[i] = strtok(NULL,"|");
@@ -961,11 +961,11 @@ int get_user_input(char **input, size_t *n){
 					/*** Storing the elements of each part ***/
 					/*****************************************/
 
-					/* (*) Each one of the following can (and should) be put 
+					/* (*) Each one of the following can (and should) be put
 					       in an individual function */
-					
+
 					char *tmp; // Temporary pointer used with strtok()
-					
+
 					/* We'll store the IDs of the tables that participate
                        in the JOIN statement as integers.
                                              -----
@@ -974,7 +974,7 @@ int get_user_input(char **input, size_t *n){
                        						 | 2 |
                        						 -----
                        						 | 4 |
-                       						 -----                            */	
+                       						 -----                            */
 					int *table_indeces; // The array where we'll store the IDs
 					int size = 0;  // The size of the table_indeces array
 
@@ -1009,7 +1009,7 @@ int get_user_input(char **input, size_t *n){
 
 							// i.e size = 1, 2, ...
 							size++;
-							
+
 							table_indeces = (int *)realloc((int *)table_indeces,
 								size*sizeof(int));
 
@@ -1020,18 +1020,18 @@ int get_user_input(char **input, size_t *n){
 
 							table_indeces[size-1] = atoi(tmp);
 						}
-					}					
+					}
 
 
-					/* We'll store each one of the filters as an individual 
+					/* We'll store each one of the filters as an individual
 					   string.
-					   
+
 					   e.g filters -> filters[0] -> "0.1=1.2"
 					                  filters[1] -> "1.0=2.1"
 					                  filters[2] -> "0.1>3000"                */
 					char **filters;
 					int size_1 = 0;
-						
+
 					while(1){
 
 						if(!size_1){
@@ -1086,12 +1086,12 @@ int get_user_input(char **input, size_t *n){
 
 							strcpy(filters[size_1-1],tmp);
 						}
-					}	
+					}
 
-					/* In order to store the ID of the table along with one of 
-					   its columns as integers, we have to split the original 
-					   string first. 
-					   
+					/* In order to store the ID of the table along with one of
+					   its columns as integers, we have to split the original
+					   string first.
+
 					   e.g: part3 -> part3[0] -> "0.0"
 					                 part3[1] -> "1.1"                        */
 					char **part3;
@@ -1153,9 +1153,9 @@ int get_user_input(char **input, size_t *n){
 
 
 					/* Now we can store both the table and its column as
-					   integers.             
+					   integers.
 					   						   table  column
-											 -----------------	
+											 -----------------
 					   e.g: sum -> sum[0] -> |   0   |   0   |
 					   						 -----------------
 					   			   sum[1] -> |   1   |   1   |
@@ -1182,12 +1182,12 @@ int get_user_input(char **input, size_t *n){
 						sum[i][1] = atoi(tmp);
 					}
 
-					/* Printing the results to ensure that everything 
-					   works fine */ 
+					/* Printing the results to ensure that everything
+					   works fine */
 					// printf("You've requested the following:\n");
 					// for(int i = 0; i < size; i++)
 					// 	printf("table[%d]: %d, ",i,table_indeces[i]);
-					
+
 					// printf("\n");
 					// for(int i = 0; i < size_1; i++)
 					// 	printf("filters[%d]: %s, ",i,filters[i]);
@@ -1214,7 +1214,7 @@ int get_user_input(char **input, size_t *n){
 					// Freeing every piece of memory that we allocated.
 					for(int i = 0; i < size_1; i++)
 						free(filters[i]);
-					
+
 					for(int i = 0; i < size_2; i++)	{
 						free(part3[i]);
 						free(sum[i]);
@@ -1265,7 +1265,7 @@ void free_histograms(int ***hist, int ***psum, int total_tables){
 	free(*psum);
 }
 
-void free_tables(struct relation ***tables, struct relation ***final_tables, 
+void free_tables(struct relation ***tables, struct relation ***final_tables,
 	int total_tables){
 	for(int i = 0; i < total_tables; i++){
 		free(tables[0][i]->tuples);
@@ -1292,7 +1292,7 @@ void free_indeces(struct index_array **my_array, int buckets){
 }
 
 // Frees every piece of memory we previously allocated
-void free_memory(int ***hist, int ***psum, int total_tables, 
+void free_memory(int ***hist, int ***psum, int total_tables,
 	struct relation ***tables, struct relation ***final_tables,
 	struct index_array **my_array, int buckets, char **input){
 
@@ -1300,4 +1300,117 @@ void free_memory(int ***hist, int ***psum, int total_tables,
 	free_tables(tables,final_tables,total_tables);
 	free_indeces(my_array,buckets);
 	free(*input);
+}
+/*
+This creates a middle and initializes every "participants" member with 0
+*/
+struct middle_table * create_middle_table(int size)
+{
+	struct middle_table *middle;
+	middle = malloc(sizeof(struct middle_table)*size);
+	for (int i=0; i<size; i++)
+	{
+		//participants = NULL;
+		middle[i].numb_of_parts =0;
+	}
+	return middle;
+}
+
+int find_relation(int relation, int *r_array, int size)
+{
+	for(int i=0; i<size; i++)
+	{
+		if (r_array[i] == relation)
+				return i;
+	}
+	//if we reach this point the relation does not exist in the array
+	return -1;
+}
+
+void insert_to_middle(struct middle_table *middle, struct table *table, int size, int relation1, int relation2, int c1, int c2)
+
+{
+		int relation_position1 = -1, relation_position2 = -1;
+		int first_empty = 0;
+		int flag = 0;
+		/*first case: first join happened none og the tables ever used
+		No need to Iterate over the table in first case
+		just add the two arrays in middle*/
+		if(middle[0].numb_of_parts == 0)
+		{
+			middle[0].participants = malloc(sizeof(int)*2);
+			middle[0].participants[0] = relation1;
+			middle[0].participants[1] = relation2;
+			middle[0].numb_of_parts = 2;
+			return;
+
+		}
+		//general search for partcipants
+		for (int i=0; i<size; i++)
+		{
+			//relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)
+			//relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)
+			/*Each relation is going in only one place of our middle array so we dont need to
+			worry about the next itterations*/
+			if(find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)){
+					relation_position1 = i;
+			}
+			if(find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)){
+					relation_position2 = i;
+			}
+			if(middle[i].numb_of_parts == 0){
+				if(flag == 0){
+					first_empty = i;
+					flag = 1;
+				}
+			}
+
+		}
+		// parsing the middle array ended
+		if(relation_position1 == -1 && relation_position2 ==-1)
+		{
+			//new relations wich means new cell in the middle array
+			middle[first_empty].participants = malloc(sizeof(int)*2);
+			middle[first_empty].participants[0] = relation1;
+			middle[first_empty].participants[1] = relation2;
+			middle[first_empty].numb_of_parts = 2;
+
+		}
+		/*in the following 2 else if statements we check if one of two relations
+		have already participated in the join and we add the other in the same cell*/
+		else if(relation_position1 == -1)
+		{
+			middle[relation_position2].numb_of_parts++;
+			int *temp;
+			int participants = middle[relation_position2].numb_of_parts;
+			temp = malloc(sizeof(int)*middle[relation_position2].numb_of_parts);
+			memcpy(temp, middle[relation_position2].participants, sizeof(int)*(participants-1));
+			free(middle[relation_position2].participants);
+			middle[relation_position2].participants = temp;
+
+		}
+		else if(relation_position2 == -1)
+		{
+			middle[relation_position1].numb_of_parts++;
+			int *temp;
+			int participants = middle[relation_position1].numb_of_parts;
+			temp = malloc(sizeof(int)*middle[relation_position1].numb_of_parts);
+			memcpy(temp, middle[relation_position1].participants, sizeof(int)*(participants-1));
+			free(middle[relation_position1].participants);
+			middle[relation_position1].participants = temp;
+
+		}
+		/*in this case both relations participated in a join
+		and they are in the same cell  */
+		else if(relation_position1 == relation_position2)
+		{
+
+		}
+		/*in this case both relations already participated in a join
+		but they are in different cells of middle table*/
+		else if(relation_position1 != relation_position2)
+		{
+
+		}
+
 }

@@ -60,6 +60,12 @@ struct rowIDtuple {
   int keyS;
 };
 
+struct middle_table{
+  int *participants;
+  int **rows_id;
+  int numb_of_parts;
+};
+
 // A list node
 struct lnode {
   int32_t key; // They key/id of that node
@@ -130,5 +136,7 @@ void free_tables(struct relation ***, struct relation ***,int);
 void free_indeces(struct index_array **, int);
 void free_memory(int ***, int ***, int, struct relation ***,
   struct relation ***, struct index_array **, int, char **);
-
+struct middle_table * create_middle_table(int );
+int find_relation(int relation, int *, int);
+void insert_to_middle(struct middle_table *, struct table *, int, int, int, int, int);
 #endif

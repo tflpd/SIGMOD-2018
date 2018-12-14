@@ -110,35 +110,79 @@ void string_parser(char *query)
   int ch2 = '<';
   int ch3 = '>';
   char *my_operator;
+  size_t s = strlen(query)+1;
+  char buf[s];
+  const char * p_end = query+s;
+  int n;
+  int index =0;
+  struct column c1,c2;
 
   if((my_operator = strchr(query,ch1)) != NULL)
     {
-      //printf("%s",my_operator);
-      int temp[4];
-      char *p =query;
-      int count,n,sum;
-      struct column column1,column2;
-      for (count = 0; query[count] != '\0'; count++)
-
+      for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
       {
-
-          if ((query[count] >= '0') && (query[count] <= '9'))
-
+        int x;
+        if(sscanf(buf, "%d", &x))
+        {
+          switch(index)
           {
-
-              n += 1;
-
-              sum += (query[count] - '0');
-
+            case 0:
+              c1.table = x;
+            case 1:
+              c1.column = x;
+            case 2:
+              c2.table = x;
+            case 3:
+              c2.column = x;
           }
-
+        }
+        index ++;
       }
-      printf("%d \n",sum);
+      printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
     }
+
   else if ((my_operator = strchr(query,ch2)) != NULL)
-      printf("%s",my_operator);
+  {
+    printf("%s",my_operator);
+    for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
+    {
+      int x;
+      if(sscanf(buf, "%d", &x))
+      {
+        switch(index)
+        {
+          case 0:
+            c1.table = x;
+          case 1:
+            c1.column = x;
+        }
+      }
+      index ++;
+    }
+    printf("table 1| %d %d ",c1.table,c1.column);
+  }
+
   else if((my_operator = strchr(query,ch3)) != NULL)
-      printf("%s",my_operator);
+  {
+    printf("%s",my_operator);
+    for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
+    {
+      int x;
+      if(sscanf(buf, "%d", &x))
+      {
+        switch(index)
+        {
+          case 0:
+            c1.table = x;
+          case 1:
+            c1.column = x;
+        }
+      }
+      index ++;
+    }
+    printf("table 1| %d %d ",c1.table,c1.column);
+  }
+
   else
       printf("fail");
 }
