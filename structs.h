@@ -1,6 +1,10 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#define NUMBUCKETS 16 // Number of buckets to be used in 1st part
+#define R 1
+#define S 2
+
 #include <time.h>
 #include <math.h>
 #include <stdio.h>
@@ -25,11 +29,20 @@ struct index_array{
 	int *bucket;     // Pointer to the first element of the bucket array in the index
 };
 
+struct bucketIndex{
+    int minTuples;
+    int numTuples;
+    int *bucket;
+    int bucketSize;
+    int *chain;
+  };
+
 struct result{
-  struct tuple *buffer; // Pointer to the first index of the buffer
-  int elements; // Number of elements in the buffer
-  struct result *next;
+  int *rowIDsR;
+  int *rowIDsS;
+  int numRows;
 };
+
 struct column{
   int table;
   int column;
@@ -41,11 +54,16 @@ struct table{
   u_int64_t columns;
 };
 
+// One result of join coupling two row ID's
+struct rowIDtuple {
+  int keyR;
+  int keyS;
+};
 
 // A list node
 struct lnode {
   int32_t key; // They key/id of that node
-  struct tuple* buffer; // The buffer to be filled with tuples
+  struct rowIDtuple* buffer; // The buffer to be filled with tuples
   int32_t counter; // Counter of the current tuples in the buffer
   struct lnode *next; // Pointer to the next list node
 };
@@ -53,7 +71,7 @@ struct lnode {
 // A list struct
 struct my_list {
   struct lnode* head; // Pointer to the first node of the list
-  struct lnode* current; // Pointer to the first node of the list
+  struct lnode* current; // Pointer to the last node of the list
   int32_t nodes_counter; // Counter of the nodes of the list
   int32_t buffer_max_cap; // Max number of tuples that should fit in each node
 };

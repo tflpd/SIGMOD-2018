@@ -1,4 +1,345 @@
 #include "structs.h"
+#include "myList.h"
+
+/*---------------------------- FIRST PART RE WRITTEN ----------------------------*/
+
+// Checks whether the provided number is prime or not
+int is_prime(int num){
+
+     if(num <= 1)
+     	return 0;
+     if(num % 2 == 0 && num > 2)
+     	return 0;
+
+     for(int i = 3; i < num / 2; i+= 2){
+     	if (num % i == 0)
+        	return 0;
+     }
+
+     return 1;
+}
+
+struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS){
+
+	// Allocating and initializing with 0's the two histograms
+	int *histR;
+	int *histS;
+	histR = calloc(NUMBUCKETS,sizeof(int));
+	histS = calloc(NUMBUCKETS,sizeof(int));
+
+	// Allocating and initializing a struct that will show for which bucket to build an index
+	struct bucketIndex* index;
+	index = malloc(sizeof(struct bucketIndex)*NUMBUCKETS);
+	for (int i = 0; i < NUMBUCKETS; ++i)
+	{
+		index[i].minTuples = 0;
+	}
+
+	// Allocating and initializing with 0's the two psums
+	int *psumR;
+	int *psumS;
+	psumR = calloc(NUMBUCKETS,sizeof(int));
+	psumS = calloc(NUMBUCKETS,sizeof(int));
+
+	// Allocating and initializing with 0's two copies of psums that we ll need later
+	int *psumRR;
+	int *psumSS;
+	psumRR = calloc(NUMBUCKETS,sizeof(int));
+	psumSS = calloc(NUMBUCKETS,sizeof(int));
+
+	// Allocating the two reordered relations
+	struct relation *reorderedR;
+	struct relation *reorderedS;
+	reorderedR = malloc(sizeof(struct relation));
+	reorderedR->tuples = malloc(sizeof(struct tuple)*relationR->num_tuples);
+	reorderedS = malloc(sizeof(struct relation));
+	reorderedS->tuples = malloc(sizeof(struct tuple)*relationS->num_tuples);
+
+	// Filling the two histograms
+	for (int i = 0; i < relationR->num_tuples; ++i)
+	{
+		int hashValue = relationR->tuples[i].payload % NUMBUCKETS;
+		histR[hashValue]++;
+	}
+	for (int i = 0; i < relationS->num_tuples; ++i)
+	{
+		int hashValue = relationS->tuples[i].payload % NUMBUCKETS;
+		histS[hashValue]++;
+	}
+
+	// Filling the two psums
+	int last = 0;
+	for (int i = 0; i < NUMBUCKETS; ++i)
+	{
+		if (histR[i] != 0)
+		{
+			psumR[i] = last;
+			psumRR[i] = last;
+			last += histR[i];
+		}
+	}
+	last = 0;
+	for (int i = 0; i < NUMBUCKETS; ++i)
+	{
+		if (histS[i] != 0)
+		{
+			psumS[i] = last;
+			psumSS[i] = last;
+			last += histS[i];
+		}
+	}
+
+	// Filling the two reordered relations
+	for (int i = 0; i < relationR->num_tuples; ++i)
+	{
+		int hashValue = relationR->tuples[i].payload % NUMBUCKETS;
+		reorderedR->tuples[psumR[hashValue]] = relationR->tuples[i];
+		psumR[hashValue]++;
+	}
+	reorderedR->num_tuples = relationR->num_tuples;
+	for (int i = 0; i < relationS->num_tuples; ++i)
+	{
+		int hashValue = relationS->tuples[i].payload % NUMBUCKETS;
+		reorderedS->tuples[psumS[hashValue]] = relationS->tuples[i];
+		psumS[hashValue]++;
+	}
+	reorderedS->num_tuples = relationS->num_tuples;
+
+	/*--------------- End of first part -------------*/
+
+	// Finding buckets with existing tuples and find for which to build an index and build it
+	for (int i = 0; i < NUMBUCKETS; ++i)
+	{
+		// If it is a bucket with values fot both relations
+		if ((histR[i] != 0) && (histS[i] != 0))
+		{
+			// If R is the relation with the least tuples
+			if (histR[i] <= histS[i]){
+				index[i].minTuples = R;
+				index[i].numTuples = histR[i];
+			}else{
+				index[i].minTuples = S;
+				index[i].numTuples = histS[i];
+			}
+
+			// Find the first prime after the size of the bucket to be used as size for the bucket array
+			int x = index[i].numTuples;
+			while(is_prime(x) == 0)
+				x++;
+			index[i].bucketSize = x;
+
+			// Allocate and initialize the bucket array
+			index[i].bucket = malloc(sizeof(int)*x);
+			for (int j = 0; j < x; ++j)
+			{
+				index[i].bucket[j] = -1;
+			}
+
+			// Allocate and initialize the chain array
+			index[i].chain = malloc(sizeof(int)*index[i].numTuples); //ISWS +1 EDW?
+			for (int j = 0; j < index[i].numTuples; ++j)
+			{
+				index[i].chain[j] = -1;
+			}
+
+			// If relation R will have the index of that bucket
+			if (index[i].minTuples == R)
+			{
+				// For every tuple of that bucket
+				for (int j = psumRR[i]; j < psumRR[i] + histR[i]; ++j)
+				{
+					// Find its hash
+					int hashValue = reorderedR->tuples[j].payload % x;
+					int prevChainIndex = index[i].bucket[hashValue];
+					// If it is the first tuple to hash on that cell of bucket array
+					if (prevChainIndex == -1)
+					{
+						int virtualPosition = j - psumRR[i];
+						index[i].bucket[hashValue] = virtualPosition;
+						index[i].chain[virtualPosition] = 0;
+					}else{
+						int virtualPosition = j - psumRR[i];
+						index[i].chain[virtualPosition] = prevChainIndex;
+						index[i].bucket[hashValue] = virtualPosition;
+					}
+
+				}
+			}else// Else relation S will have the index for that bucket
+			{
+				// For every tuple of that bucket
+				for (int j = psumSS[i]; j < psumSS[i] + histS[i]; ++j)
+				{
+					// Find its hash
+					int hashValue = reorderedS->tuples[j].payload % x;
+					int prevChainIndex = index[i].bucket[hashValue];
+					// If it is the first tuple to hash on that cell of bucket array
+					if (prevChainIndex == -1)
+					{
+						int virtualPosition = j - psumSS[i];
+						index[i].bucket[hashValue] = virtualPosition;
+						index[i].chain[virtualPosition] = 0;
+					}else{
+						int virtualPosition = j - psumSS[i];
+						index[i].chain[virtualPosition] = prevChainIndex;
+						index[i].bucket[hashValue] = virtualPosition;
+					}
+
+				}
+			}
+		}
+	}
+
+	/*------ Now that we have the indexes ready we are scanning each
+	 bucket that does not have an index and we try to find values on the indexed bucket
+	 in order to join them in the result -----*/
+
+	struct my_list* list;
+	list = list_init(6); // 6 is the size of the buffer of each list node holding the results
+	int resultsCounter = 0; // The number of results that got added in the buffer
+
+	// For each bucket
+	for (int i = 0; i < NUMBUCKETS; ++i)
+	{
+		// Find wich relation has the index
+		if (index[i].minTuples == R) // If it is R
+		{
+			// For each tuple of S that belongs to that bucket
+			for (int j = psumSS[i]; j < psumSS[i] + histS[i]; ++j)
+			{
+				// Find where this tuple hashes
+				int hashValue = reorderedS->tuples[j].payload % index[i].bucketSize;
+				// And get its first possible position in R through array bucket
+				int possiblePosition = index[i].bucket[hashValue];
+				// If its -1 it means no value in R hashes there so move on
+				if (possiblePosition == -1)
+				{
+					continue;
+				}else// Else at least one value of R has hashed there
+				{
+					// Calculate the actual position in R of that tuple
+					int actualPositionInR = psumRR[i] + possiblePosition;
+					// Check if they match and if they do add them to results
+					if (reorderedS->tuples[j].payload == reorderedR->tuples[actualPositionInR].payload)
+					{
+						list = add_to_buff(list, reorderedR->tuples[actualPositionInR].key, reorderedS->tuples[j].key);
+						resultsCounter++;
+					}
+					// After that continue checking array chain
+					possiblePosition = index[i].chain[possiblePosition];
+					// As far you do not meet 0 (the last tuple of that hash chain) continue searching for matches
+					while(possiblePosition != 0){
+						actualPositionInR = psumRR[i] + possiblePosition;
+						if (reorderedS->tuples[j].payload == reorderedR->tuples[actualPositionInR].payload)
+						{
+							list = add_to_buff(list, reorderedR->tuples[actualPositionInR].key, reorderedS->tuples[j].key);
+							resultsCounter++;
+						}
+						possiblePosition = index[i].chain[possiblePosition];
+					}
+				}
+			}
+		}else // Else if S has the index we do the exact opposite
+		{
+			for (int j = psumRR[i]; j < psumRR[i] + histR[i]; ++j)
+			{
+				int hashValue = reorderedR->tuples[j].payload % index[i].bucketSize;
+				int possiblePosition = index[i].bucket[hashValue];
+
+				if (possiblePosition == -1)
+				{
+					continue;
+				}else
+				{
+					int actualPositionInS = psumSS[i] + possiblePosition;
+
+					if (reorderedR->tuples[j].payload == reorderedS->tuples[actualPositionInS].payload)
+					{
+						list = add_to_buff(list, reorderedR->tuples[j].key, reorderedS->tuples[actualPositionInS].key);
+						resultsCounter++;
+					}
+
+					possiblePosition = index[i].chain[possiblePosition];
+					while(possiblePosition != 0){
+						actualPositionInS = psumSS[i] + possiblePosition;
+						if (reorderedR->tuples[j].payload == reorderedS->tuples[actualPositionInS].payload)
+						{
+							list = add_to_buff(list, reorderedR->tuples[j].key, reorderedS->tuples[actualPositionInS].key);
+							resultsCounter++;
+						}
+						possiblePosition = index[i].chain[possiblePosition];
+					}
+				}
+			}
+		}
+	}
+
+	struct result *finalResult;
+	finalResult = malloc(sizeof(struct result));
+	finalResult->rowIDsR = malloc(sizeof(int)*resultsCounter);
+	finalResult->rowIDsS = malloc(sizeof(int)*resultsCounter);
+	finalResult->numRows = resultsCounter;
+
+	struct lnode *tmp;
+	tmp = list->head;
+	int resultsIterCounter;
+	resultsIterCounter = 0;
+
+	if (tmp != NULL)
+	{
+		while(tmp->key < list->current->key){
+			for (int i = 0; i < tmp->counter; ++i)
+			{
+				finalResult->rowIDsR[resultsIterCounter] = tmp->buffer[i].keyR;
+				finalResult->rowIDsS[resultsIterCounter] = tmp->buffer[i].keyS;
+				resultsIterCounter++;
+			}
+			tmp = tmp->next;
+		}
+		for (int i = 0; i < tmp->counter; ++i)
+		{
+			finalResult->rowIDsR[resultsIterCounter] = tmp->buffer[i].keyR;
+			finalResult->rowIDsS[resultsIterCounter] = tmp->buffer[i].keyS;
+			resultsIterCounter++;
+		}
+	}
+
+	// Freeing up all the allocated space
+
+	free(histR);
+	free(histS);
+	free(psumR);
+	free(psumS);
+	free(psumRR);
+	free(psumSS);
+
+	/*for (int i = 0; i < relationR->num_tuples; ++i)
+	{
+		free(reorderedR->tuples[i]);
+	}*/
+	free(reorderedR->tuples);
+	free(reorderedR);
+
+	/*for (int i = 0; i < relationS->num_tuples; ++i)
+	{
+		free(reorderedS->tuples[i]);
+	}*/
+	free(reorderedS->tuples);
+	free(reorderedS);
+
+	for (int i = 0; i < NUMBUCKETS; ++i)
+	{
+		free(index[i].bucket);
+		free(index[i].chain);
+	}
+	free(index);
+
+	delete_list(list);
+
+
+	return finalResult;
+}
+
+/*----------------------------  END OF RE WRITTEN FIRST PART----------------------------*/
 
 // Checks the arguments that were provided in the command line
 int check_args(int argc, char **argv, int *buckets, int *N){
@@ -272,22 +613,6 @@ void get_min_data(int total_tables, int bucket_index, int **hist,
 
 	*total_data = min_value;
 	*table_index = min_table;
-}
-
-// Checks whether the provided number is prime or not
-int is_prime(int num){
-
-     if(num <= 1)
-     	return 0;
-     if(num % 2 == 0 && num > 2)
-     	return 0;
-
-     for(int i = 3; i < num / 2; i+= 2){
-     	if (num % i == 0)
-        	return 0;
-     }
-
-     return 1;
 }
 
 // Allocating memory for the chain array of a bucket

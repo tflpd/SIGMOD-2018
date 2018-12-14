@@ -17,7 +17,7 @@ struct my_list* add_node(struct my_list* list_pointer){
 	//printf("Creating new node.\n");
 	list_pointer->nodes_counter++;
 	tmp->key = list_pointer->nodes_counter;
-	tmp->buffer = malloc(sizeof(tuple)*(list_pointer->buffer_max_cap));
+	tmp->buffer = malloc(sizeof(struct rowIDtuple)*(list_pointer->buffer_max_cap));
 	tmp->counter = 0;
 	tmp->next = NULL;	
 
@@ -32,34 +32,41 @@ struct my_list* add_node(struct my_list* list_pointer){
 	return list_pointer;
 }
 
-struct my_list* add_to_buff(struct my_list* list_pointer, struct tuple new_tuple){
+struct my_list* add_to_buff(struct my_list* list_pointer, int keyR, int keyS){
 	if ((list_pointer->head == NULL) || (list_pointer->current->counter == list_pointer->buffer_max_cap))
 	{
 		list_pointer = add_node(list_pointer);
 	}
 	//printf("Added new tuple.\n");
-	list_pointer->current->buffer[list_pointer->current->counter] = new_tuple;
+	list_pointer->current->buffer[list_pointer->current->counter].keyR = keyR;
+	list_pointer->current->buffer[list_pointer->current->counter].keyS = keyS;
 	list_pointer->current->counter++;
 	return list_pointer;
 }
 
 void delete_list(struct my_list* list_pointer){
 	struct lnode* tmp;
+	tmp  = NULL;
 	//printf("Initating deleting.\n");
-	while(list_pointer->head->key != list_pointer->current->key){
-		tmp = list_pointer->head;
-		list_pointer->head = list_pointer->head->next;
+	if (list_pointer->head != NULL)
+	{
+		while(list_pointer->head->key != list_pointer->current->key){
+				tmp = list_pointer->head;
+				list_pointer->head = list_pointer->head->next;
 
-		tmp->next = NULL;
+				tmp->next = NULL;
+				free(tmp->buffer);
+				free(tmp);
+			}
+			tmp = list_pointer->head;
+			list_pointer->head = NULL;
+			list_pointer->current = NULL;
+	}
+	if (tmp != NULL)
+	{
 		free(tmp->buffer);
 		free(tmp);
 	}
-	tmp = list_pointer->head;
-	list_pointer->head = NULL;
-	list_pointer->current = NULL;
-
-	free(tmp->buffer);
-	free(tmp);
 	free(list_pointer);
 }
 
@@ -67,7 +74,7 @@ void print_node(struct lnode* node){
 	//printf("Now printing node with key: %d\n", node->key);
 	for (int i = 0; i < node->counter; ++i)
 	{
-		printf("%d %d\n", node->buffer[i].key, node->buffer[i].payload);
+		printf("%d %d\n", node->buffer[i].keyR, node->buffer[i].keyS);
 	}
 	printf("\n");
 }
