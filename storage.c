@@ -89,8 +89,8 @@ struct table * create_table_new(char * name)
 
 void free_table_new(struct table *my_table, int lines)
 {
-  printf("greinn\n");
-  printf("my_t %d\n",my_table[1].columns);
+  //printf("greinn\n");
+  //printf("my_t %d\n",my_table[1].columns);
   for(int i=0; i<lines; i++)
   {
       //printf("i = %d",i);
@@ -138,12 +138,12 @@ void string_parser(char *query)
         }
         index ++;
       }
-      printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
+      //printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
     }
 
   else if ((my_operator = strchr(query,ch2)) != NULL)
   {
-    printf("%s",my_operator);
+    //printf("%s",my_operator);
     for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
     {
       int x;
@@ -159,12 +159,12 @@ void string_parser(char *query)
       }
       index ++;
     }
-    printf("table 1| %d %d ",c1.table,c1.column);
+    //printf("table 1| %d %d ",c1.table,c1.column);
   }
 
   else if((my_operator = strchr(query,ch3)) != NULL)
   {
-    printf("%s",my_operator);
+    //printf("%s",my_operator);
     for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
     {
       int x;
