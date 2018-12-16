@@ -154,18 +154,22 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 					// If it is the first tuple to hash on that cell of bucket array
 					if (prevChainIndex == -1)
 					{
+						//printf("AXNE\n");
 						int virtualPosition = j - psumRR[i];
 						index[i].bucket[hashValue] = virtualPosition;
-						index[i].chain[virtualPosition] = 0;
+						index[i].chain[virtualPosition] = -2;
 					}else{
 						int virtualPosition = j - psumRR[i];
+						//printf("MPIKA %d\n", virtualPosition);
 						index[i].chain[virtualPosition] = prevChainIndex;
 						index[i].bucket[hashValue] = virtualPosition;
+						//printf("Sto index %d thesi %d timi %d\n", i, hashValue, virtualPosition);
 					}
 
 				}
 			}else// Else relation S will have the index for that bucket
 			{
+				//printf("EDW OXI\n");
 				// For every tuple of that bucket
 				for (int j = psumSS[i]; j < psumSS[i] + histS[i]; ++j)
 				{
@@ -177,7 +181,7 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 					{
 						int virtualPosition = j - psumSS[i];
 						index[i].bucket[hashValue] = virtualPosition;
-						index[i].chain[virtualPosition] = 0;
+						index[i].chain[virtualPosition] = -2;
 					}else{
 						int virtualPosition = j - psumSS[i];
 						index[i].chain[virtualPosition] = prevChainIndex;
@@ -203,6 +207,14 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 		// Find wich relation has the index
 		if (index[i].minTuples == R) // If it is R
 		{
+			/*for (int j = 0; j < index[i].numTuples; ++j)
+			{
+				printf("%d\n", index[i].chain[j]);
+			}
+			for (int j = 0; j < index[i].bucketSize; ++j)
+			{
+				printf("%d\n", index[i].bucket[j]);
+			}*/
 			// For each tuple of S that belongs to that bucket
 			for (int j = psumSS[i]; j < psumSS[i] + histS[i]; ++j)
 			{
@@ -227,7 +239,7 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 					// After that continue checking array chain
 					possiblePosition = index[i].chain[possiblePosition];
 					// As far you do not meet 0 (the last tuple of that hash chain) continue searching for matches
-					while(possiblePosition != 0){
+					while(possiblePosition != -2){
 						actualPositionInR = psumRR[i] + possiblePosition;
 						if (reorderedS->tuples[j].payload == reorderedR->tuples[actualPositionInR].payload)
 						{
@@ -238,7 +250,7 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 					}
 				}
 			}
-		}else // Else if S has the index we do the exact opposite
+		}else if(index[i].minTuples == S) // Else if S has the index we do the exact opposite
 		{
 			for (int j = psumRR[i]; j < psumRR[i] + histR[i]; ++j)
 			{
@@ -259,7 +271,7 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 					}
 
 					possiblePosition = index[i].chain[possiblePosition];
-					while(possiblePosition != 0){
+					while(possiblePosition != -2){
 						actualPositionInS = psumSS[i] + possiblePosition;
 						if (reorderedR->tuples[j].payload == reorderedS->tuples[actualPositionInS].payload)
 						{
@@ -270,6 +282,8 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 					}
 				}
 			}
+		}else{// If none has an index
+			continue;
 		}
 	}
 
@@ -304,7 +318,6 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 	}
 
 	// Freeing up all the allocated space
-
 	free(histR);
 	free(histS);
 	free(psumR);
@@ -328,8 +341,11 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 
 	for (int i = 0; i < NUMBUCKETS; ++i)
 	{
-		free(index[i].bucket);
-		free(index[i].chain);
+		if (index[i].minTuples != 0)
+		{
+			free(index[i].bucket);
+			free(index[i].chain);
+		}
 	}
 	free(index);
 
@@ -341,7 +357,7 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 
 /*----------------------------  END OF RE WRITTEN FIRST PART----------------------------*/
 
-// Checks the arguments that were provided in the command line
+/*// Checks the arguments that were provided in the command line
 int check_args(int argc, char **argv, int *buckets, int *N){
 
 	if(argc != 2){
@@ -353,7 +369,7 @@ int check_args(int argc, char **argv, int *buckets, int *N){
 	*buckets = pow(2,*N);
 
 	return 0;
-}
+}*/
 
 // Allocates memory for the histogram array of a table and initializes it
 int allocate_hist(int **hist_ptr, int buckets){

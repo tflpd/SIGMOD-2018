@@ -103,7 +103,7 @@ void free_table_new(struct table *my_table, int lines)
   free(my_table);
 }
 
-void string_parser(char *query)
+/*void string_parser(char *query)
 {
   char *temp = query;
   int ch1 = '=';
@@ -185,4 +185,4 @@ void string_parser(char *query)
 
   else
       printf("fail");
-}
+}*/

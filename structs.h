@@ -30,8 +30,8 @@ struct index_array{
 };
 
 struct bucketIndex{
-    int minTuples;
-    int numTuples;
+    int minTuples; // The relation with the minimun tuples for which we have an index: R or S
+    int numTuples; // The numbe of tuples in that bucket - index
     int *bucket;
     int bucketSize;
     int *chain;
@@ -95,6 +95,8 @@ struct batch {
   struct query* queries;
   int numQueries;
 };
+
+struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS);
 
 int check_args(int, char **, int *, int *);
 int allocate_hist(int **, int);
