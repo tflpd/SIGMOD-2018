@@ -1245,6 +1245,7 @@ int get_user_input(char **input, size_t *n){
 					numQueries++;
 				}
 			}
+			/* EDW STELNW BATCH GIA EKTELESI*/
 			printf("Executed %d queries.\n", numQueries);
 			fclose(fin);
 			free(query);

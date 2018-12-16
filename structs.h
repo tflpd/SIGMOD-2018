@@ -96,8 +96,6 @@ struct batch {
   int numQueries;
 };
 
-struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS);
-
 int check_args(int, char **, int *, int *);
 int allocate_hist(int **, int);
 int allocate_psum(int **, int);
@@ -141,4 +139,8 @@ void free_memory(int ***, int ***, int, struct relation ***,
 struct middle_table * create_middle_table(int );
 int find_relation(int relation, int *, int);
 void insert_to_middle(struct middle_table *, struct table *, int, int, int, int, int);
+/*-----*/
+
+struct query* create_query(int* table_indeces, int size, char** filters, int size_1, int** sum, int size_2);
+struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS);
 #endif
