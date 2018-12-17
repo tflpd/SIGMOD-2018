@@ -1449,6 +1449,10 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
         }
       }
       free(middle[position2].rows_id);
+      for(i=0; i<participants-1; i++)
+      {
+        free(middle[position2].rows_id[i]);
+      }
       memcpy(temp_rows_id[participants], join_result->rowIDsS, sizeof(int)*join_result->numRows);
       middle[position2].rows_id = temp_rows_id;
 
@@ -1492,13 +1496,43 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
           data = 0;
         }
       }
+      for(i=0; i<participants-1; i++)
+      {
+        free(middle[position1].rows_id[i]);
+      }
       free(middle[position1].rows_id);
+      memcpy(temp_rows_id[participants], join_result->rowIDsS, sizeof(int)*join_result->numRows);
       middle[position1].rows_id = temp_rows_id;
 		}
 		/*in this case both relations participated in a join
 		and they are in the same cell  */
 		else if(relation_position1 == relation_position2)
 		{
+      int *temp1, *temp2;
+      struct relation *temp_rel1, *temp_rel2;
+      int i;
+      int index;
+      struct result* join_result;
+      // No need to add/merge anything to the middle.participants table because the relations are already in
+      temp_rel1 = malloc(sizeof(struct relation));
+			temp_rel1->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
+			for(int i=0; i<middle[position1].rows_size; i++)
+			{
+				index = middle[position1].rows_id[relation_position1][i];
+				temp_rel1->tuples[i].key = index;
+				temp_rel1->tuples[i].payload = table[relation1].my_relation[c1].tuples[index].payload;
+
+			}
+      temp_rel2 = malloc(sizeof(struct relation));
+			temp_rel2->tuples = malloc(sizeof(struct tuple)*middle[position2].rows_size);
+			for(int i=0; i<middle[position2].rows_size; i++)
+			{
+				index = middle[position2].rows_id[relation_position2][i];
+				temp_rel2->tuples[i].key = index;
+				temp_rel2->tuples[i].payload = table[relation2].my_relation[c2].tuples[index].payload;
+
+			}
+      join_result = RadixHashJoin(temp_rel1, temp_rel2);
 
 		}
 		/*in this case both relations already participated in a join
