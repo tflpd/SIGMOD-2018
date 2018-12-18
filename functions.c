@@ -1755,7 +1755,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
       int position_of_temp;
 			int index;
       int data =0;
-			struct result* join_result;      
+			struct result* join_result;
 			// No need to add/merge anything to the middle.participants table because the relations are already in
 			temp_rel1 = malloc(sizeof(struct relation));
 			temp_rel1->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
