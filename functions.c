@@ -1344,8 +1344,6 @@ int find_relation(int relation, int *r_array, int size)
 	return -1;
 }
 
-// NA FTIAKSW KAI CHECK FOR DOUBLES STIN LISTA RESULT ISWS KAI OXI
-
 struct result *filterPredicate(struct relation *relationR, int comparingValue, int comparingMode){
 	struct my_list* list;
 	list = list_init(NUMRESULTS); // NUMRESULTS is the size of the buffer of each list node holding the results
@@ -1478,6 +1476,65 @@ struct result *scanRelations(struct relation *relationR, struct relation *relati
 	delete_list(list);
 
 	return finalResult;
+}
+
+// Function to figure out each projections index in the participants array
+// For example if we have as participants array the 1 5 3 and we need to project
+// 3.1 5.0 projectionsIndeces will be 2 1 (the indeces of the relations to be projected)
+int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections){
+	int *projectionsIndeces;
+	projectionsIndeces = malloc(sizeof(int)*numProjections);
+
+	for (int i = 0; i < numProjections; ++i)
+	{
+		for (int j = 0; j < numb_of_parts; ++j)
+		{
+			if (projections[i][0] == participants[j])
+			{
+				projectionsIndeces[i] = j;
+				break;
+			}
+			// CAREFUL MAYBE CORNER CASE TO BE ADDED IF PROJECTION REQUESTED NOT IN PARTICIPANTS
+		}
+	}
+
+	return projectionsIndeces;
+}
+
+// Function that actually takes the last merged middle table and prints the payloads of the rows
+// that are present and the final result. Noteworthy that only the columns mentioned in the projections
+// will be printed and not all that are present in the final mergedMiddle
+void printQueryResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery){
+	// If there are no rows in the final middle table
+	if (mergedMiddle->rows_size == 0)
+	{
+		for (int i = 0; i < currQuery.size3; ++i)
+		{
+			printf("NULL ");
+		}
+		printf("\n");
+	}else{
+		int *projectionsIndeces;
+		// Find the indeces of the projections requested in the participants table
+		projectionsIndeces = findProjectionsIndeces(mergedMiddle->participants, mergedMiddle->numb_of_parts, currQuery.projections, currQuery.size3);
+		// And for each row in the final middle table
+		for (int i = 0; i < mergedMiddle->rows_size; ++i)
+		{
+			// For each projection that is asked to be made
+			for (int j = 0; j < currQuery.size3; ++j)
+			{
+				// Find the id of the relation to be projected
+				int relationProjectionID = currQuery.projections[j][0];
+				// Find the id of the column of that relation to be projected
+				int columnProjectionID = currQuery.projections[j][1];
+				// Find the id of the row of that relation to be projected
+				int rowProjectionID = mergedMiddle->rows_id[projectionsIndeces[j]][i];
+				// And print it or I hope so
+				printf("%d ", table[relationProjectionID].my_relation[columnProjectionID].tuples[rowProjectionID].payload);
+			}
+			printf("\n");
+		}
+	}
 }
 
 void insert_to_middle(struct middle_table *middle, struct table *table, int size, int relation1, int relation2, int c1, int c2)

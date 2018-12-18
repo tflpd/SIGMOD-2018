@@ -61,16 +61,6 @@ int main(int argc, char **argv){
 
 
 
-
-
-
-
-
-
-
-
-
-
 	/* EDW PERNEIS DATA */
 
 	print_welcome_msg(1);

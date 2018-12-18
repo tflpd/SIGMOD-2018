@@ -2,7 +2,7 @@
 #define STRUCTS_H
 
 #define NUMBUCKETS 16 // Number of buckets to be used in 1st part
-#define NUMRESULTS 6 // Number of results per buffer in the list nodes of results of join
+#define NUMRESULTS 1024 // Number of results per buffer in the list nodes of results of join
 #define BIGGER 0 // values used in filterPredicate function to determine the comparing mode
 #define LESS 1 // values used in filterPredicate function to determine the comparing mode
 #define EQUAL 2 // values used in filterPredicate function to determine the comparing mode
@@ -71,6 +71,11 @@ struct middle_table{
   int numb_of_parts;
 };
 
+struct checkSum
+{
+  int numColumns; // The number of columns for which we 
+};
+
 // A list node
 struct lnode {
   int32_t key; // They key/id of that node
@@ -88,12 +93,12 @@ struct my_list {
 };
 
 struct query {
-  int* table_indeces;
-  int size1;
-  char** filters;
-  int size2;
-  int** projections;
-  int size3;
+  int* table_indeces; // The relations which we need to load for that query
+  int size1; // And their amount
+  char** filters; // The filters expressed as strings each one tha we have to resolve
+  int size2; // And their amount
+  int** projections; // The final projections expresses as int tuples i.e. 1.1 -> 1 1
+  int size3; // And their amount
 };
 
 struct batch {
@@ -149,4 +154,7 @@ void insert_to_middle(struct middle_table *, struct table *, int, int, int, int,
 struct query* create_query(int* table_indeces, int size, char** filters, int size_1, int** sum, int size_2);
 struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS);
 struct result *scanRelations(struct relation *relationR, struct relation *relationS);
+struct result *filterPredicate(struct relation *relationR, int comparingValue, int comparingMode);
+int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections);
+void printQueryResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery);
 #endif
