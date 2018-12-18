@@ -1357,21 +1357,21 @@ struct result *filterPredicate(struct relation *relationR, int comparingValue, i
 		{
 			if (relationR->tuples[i].payload > comparingValue)
 			{
-				list = add_to_buff(list, relationR->tuples[i].key, 0)
+				list = add_to_buff(list, relationR->tuples[i].key, 0);
 				resultsCounter++;
 			}
 		}
 		else if (comparingMode == LESS){
 			if (relationR->tuples[i].payload < comparingValue)
 			{
-				list = add_to_buff(list, relationR->tuples[i].key, 0)
+				list = add_to_buff(list, relationR->tuples[i].key, 0);
 				resultsCounter++;
 			}
 		}
 		else if (comparingMode == EQUAL){
 			if (relationR->tuples[i].payload == comparingValue)
 			{
-				list = add_to_buff(list, relationR->tuples[i].key, 0)
+				list = add_to_buff(list, relationR->tuples[i].key, 0);
 				resultsCounter++;
 			}
 		}else{
@@ -1693,6 +1693,137 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		else if(relation_position1 != relation_position2)
 		{
 			// EDV NA KALEITAI KANONIKA RADIX
+      int *temp1, *temp2;
+			struct relation *temp_rel1, *temp_rel2;
+			int i;
+      int position_of_temp;
+			int index;
+      int data =0;
+			struct result* join_result;
+			// No need to add/merge anything to the middle.participants table because the relations are already in
+			temp_rel1 = malloc(sizeof(struct relation));
+			temp_rel1->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
+			for(int i=0; i<middle[position1].rows_size; i++)
+			{
+				index = middle[position1].rows_id[relation_position1][i];
+				temp_rel1->tuples[i].key = index;
+				temp_rel1->tuples[i].payload = table[relation1].my_relation[c1].tuples[index].payload;
+
+			}
+			temp_rel2 = malloc(sizeof(struct relation));
+			temp_rel2->tuples = malloc(sizeof(struct tuple)*middle[position2].rows_size);
+			for(int i=0; i<middle[position2].rows_size; i++)
+			{
+				index = middle[position2].rows_id[relation_position2][i];
+				temp_rel2->tuples[i].key = index;
+				temp_rel2->tuples[i].payload = table[relation2].my_relation[c2].tuples[index].payload;
+
+			}
+      join_result = RadixHashJoin(temp_rel1, temp_rel2);
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////EDIT ROWS ID FOR THE FIRST RELATION////////////////////////////////////
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////
+      int **temp_rows_id;
+      int participants = middle[relation_position1].numb_of_parts;
+      position_of_temp =0;
+      for(i=0; i<middle[position1].rows_size; i++)
+			{
+				if(middle[position1].rows_id[relation_position1][i] == join_result->rowIDsR[position_of_temp])
+				{
+					for(int j=0; j<participants; j++)
+					{
+						temp_rows_id[j][data] = middle[position1].rows_id[j][i];
+						data++;
+					}
+					data = 0;
+				}
+			}
+      for(i=0; i<participants; i++)
+      {
+        free(middle[position1].rows_id[i]);
+      }
+      free(middle[position1].rows_id);
+      middle[position1].rows_id = temp_rows_id;
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////EDIT ROWS ID FOR THE SECOND RELATION///////////////////////////////////
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////
+      int r2_participants = middle[relation_position2].numb_of_parts;
+      int **temp_rows_id_r2;
+      position_of_temp =0;
+      data =0;
+      for(i=0; i<middle[position2].rows_size; i++)
+			{
+				if(middle[position2].rows_id[relation_position2][i] == join_result->rowIDsS[position_of_temp])
+				{
+					for(int j=0; j<participants; j++)
+					{
+						temp_rows_id_r2[j][data] = middle[position2].rows_id[j][i];
+						data++;
+					}
+					data = 0;
+				}
+			}
+      for(i=0; i<participants; i++)
+      {
+        free(middle[position2].rows_id[i]);
+      }
+      free(middle[position2].rows_id);
+      middle[position2].rows_id = temp_rows_id_r2;
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////MERGE THEM//////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      int **merged_rows_id;
+      int *merged_participants;
+      middle[position1].numb_of_parts = participants + r2_participants;
+      int merged_parts = participants + r2_participants;
+      merged_rows_id = malloc(sizeof(int)*merged_parts);
+      merged_participants = malloc(sizeof(int)*merged_parts);
+      //in the following 2 lines, i used pointer arithmetics to memcpy (Possible seg )!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      memcpy(merged_participants, middle[position1].participants, sizeof(int)*participants);
+      memcpy(merged_participants + sizeof(int)*participants, middle[position2].participants, sizeof(int)*r2_participants);
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      //////////////////////////////Copy the relation1's row_id array in the merged one/////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      for(i=0; i<participants; i++)
+      {
+        merged_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
+        memcpy(merged_rows_id[i], middle[position1].rows_id[i], sizeof(int)*join_result->numRows);
+      }
+      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      //////////////////////////////Copy the relation2's row_id array in the merged one/////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      for(i=participants; i<r2_participants; i++)
+      {
+        merged_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
+        memcpy(merged_rows_id[i], middle[position2].rows_id[i], sizeof(int)*join_result->numRows);
+      }
+      ////////////////////////////////////////////////////////////////////////
+      ////////////////////// free relation1 row_id/////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+      for(i=0; i<participants; i++)
+      {
+        free(middle[position1].rows_id[i]);
+      }
+      free(middle[position1].rows_id);
+      ////////////////////////////////////////////////////////////////////////
+      ////////////////////// free relation2 row_id/////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+      for(i=0; i<r2_participants; i++)
+      {
+        free(middle[position2].rows_id[i]);
+      }
+      free(middle[position2].rows_id);
+      free(middle[position2].participants);
+      middle[position2].numb_of_parts = 0;
+      ////////////////////////////////////////////////////////////////////////////////
+      /////////////////////////////////////merge/////////////////////////////////////
+      //////////////////////////////////////////////////////////////////////////////////
+      middle[position1].numb_of_parts = participants + r2_participants;
+      middle[position1].rows_id = merged_rows_id;
+      middle[position1].rows_size = join_result->numRows;
+
+
+
 		}
 
 }
