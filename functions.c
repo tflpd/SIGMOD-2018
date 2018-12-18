@@ -1749,14 +1749,13 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		but they are in different cells of middle table*/
 		else if(relation_position1 != relation_position2)
 		{
-			// EDV NA KALEITAI KANONIKA RADIX
       int *temp1, *temp2;
 			struct relation *temp_rel1, *temp_rel2;
 			int i;
       int position_of_temp;
 			int index;
       int data =0;
-			struct result* join_result;
+			struct result* join_result;      
 			// No need to add/merge anything to the middle.participants table because the relations are already in
 			temp_rel1 = malloc(sizeof(struct relation));
 			temp_rel1->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
