@@ -2,6 +2,7 @@
 #define STRUCTS_H
 
 #define NUMBUCKETS 16 // Number of buckets to be used in 1st part
+#define NUMRESULTS 6 // Number of results per buffer in the list nodes of results of join
 #define R 1
 #define S 2
 
@@ -144,4 +145,5 @@ void insert_to_middle(struct middle_table *, struct table *, int, int, int, int,
 
 struct query* create_query(int* table_indeces, int size, char** filters, int size_1, int** sum, int size_2);
 struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS);
+struct result *scanRelations(struct relation *relationR, struct relation *relationS);
 #endif
