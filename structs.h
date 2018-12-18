@@ -3,6 +3,9 @@
 
 #define NUMBUCKETS 16 // Number of buckets to be used in 1st part
 #define NUMRESULTS 6 // Number of results per buffer in the list nodes of results of join
+#define BIGGER 0 // values used in filterPredicate function to determine the comparing mode
+#define LESS 1 // values used in filterPredicate function to determine the comparing mode
+#define EQUAL 2 // values used in filterPredicate function to determine the comparing mode
 #define R 1
 #define S 2
 

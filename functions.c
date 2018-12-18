@@ -1344,6 +1344,77 @@ int find_relation(int relation, int *r_array, int size)
 	return -1;
 }
 
+// NA FTIAKSW KAI CHECK FOR DOUBLES STIN LISTA RESULT ISWS KAI OXI
+
+struct result *filterPredicate(struct relation *relationR, int comparingValue, int comparingMode){
+	struct my_list* list;
+	list = list_init(NUMRESULTS); // NUMRESULTS is the size of the buffer of each list node holding the results
+	int resultsCounter = 0; // The number of results that got added in the buffer
+
+	for (int i = 0; i < relationR->num_tuples; ++i)
+	{
+		if (comparingMode == BIGGER)
+		{
+			if (relationR->tuples[i].payload > comparingValue)
+			{
+				list = add_to_buff(list, relationR->tuples[i].key, 0)
+				resultsCounter++;
+			}
+		}
+		else if (comparingMode == LESS){
+			if (relationR->tuples[i].payload < comparingValue)
+			{
+				list = add_to_buff(list, relationR->tuples[i].key, 0)
+				resultsCounter++;
+			}
+		}
+		else if (comparingMode == EQUAL){
+			if (relationR->tuples[i].payload == comparingValue)
+			{
+				list = add_to_buff(list, relationR->tuples[i].key, 0)
+				resultsCounter++;
+			}
+		}else{
+			printf("WRONG COMPARING MODE CODE IN FILTER PREDICATE\n");
+			return NULL;
+		}
+	}
+
+	struct result *finalResult;
+	finalResult = malloc(sizeof(struct result));
+	finalResult->rowIDsR = malloc(sizeof(int)*resultsCounter);
+	finalResult->rowIDsS = malloc(sizeof(int)*resultsCounter);
+	finalResult->numRows = resultsCounter;
+
+	struct lnode *tmp;
+	tmp = list->head;
+	int resultsIterCounter;
+	resultsIterCounter = 0;
+
+	if (tmp != NULL)
+	{
+		while(tmp->key < list->current->key){
+			for (int i = 0; i < tmp->counter; ++i)
+			{
+				finalResult->rowIDsR[resultsIterCounter] = tmp->buffer[i].keyR;
+				finalResult->rowIDsS[resultsIterCounter] = 0;
+				resultsIterCounter++;
+			}
+			tmp = tmp->next;
+		}
+		for (int i = 0; i < tmp->counter; ++i)
+		{
+			finalResult->rowIDsR[resultsIterCounter] = tmp->buffer[i].keyR;
+			finalResult->rowIDsS[resultsIterCounter] = 0;
+			resultsIterCounter++;
+		}
+	}
+
+	delete_list(list);
+
+	return finalResult;
+}
+
 // Function to use instead of Join for the extra cases mentionedy
 struct result *scanRelations(struct relation *relationR, struct relation *relationS){
 	struct my_list* list;
@@ -1442,7 +1513,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 					relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts);
 			}
 			if(find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)){
-					relation_position2 = i;
+					position2 = i;
 					relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts);
 			}
 			if(middle[i].numb_of_parts == 0){
@@ -1459,7 +1530,6 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		if(relation_position1 == -1 && relation_position2 ==-1)
 		{
 			// If we have to join two columns of the same relation
-			// NOT 100% SURE YET THIS IS THE IMPLEMENTATION THE PRESENTATION MEANS, CROSS CHECKING IT
 			if (relation1 == relation2)
 			{
 				//new relation wich means new cell in the middle array
@@ -1468,7 +1538,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				middle[first_empty].participants[0] = relation1;
 				middle[first_empty].numb_of_parts = 1;
 
-				// Not worthy that in such a case the rows id's of both R and S are the same since we have only one relation
+				// Noteworthy that in such a case the rows id's of both R and S are the same since we have only one relation
 				join_result = scanRelations(&table[relation1].my_relation[c1], &table[relation2].my_relation[c2]);
 				middle[first_empty].rows_id = malloc(sizeof(int));
 				middle[first_empty].rows_id[0] = malloc(sizeof(int)*join_result->numRows);
@@ -1591,7 +1661,6 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				and they are in the same cell  */
 		else if(relation_position1 == relation_position2)
 		{
-			// TOTE EDW NA TO ALLAKSOUME NA KALOUME TIN scanRelations anti gia Radix Hash
 			int *temp1, *temp2;
 			struct relation *temp_rel1, *temp_rel2;
 			int i;
@@ -1616,7 +1685,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				temp_rel2->tuples[i].payload = table[relation2].my_relation[c2].tuples[index].payload;
 
 			}
-			join_result = RadixHashJoin(temp_rel1, temp_rel2);
+			join_result = scanRelations(temp_rel1, temp_rel2);
 
 		}
 		/*in this case both relations already participated in a join
