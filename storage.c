@@ -103,7 +103,7 @@ void free_table_new(struct table *my_table, int lines)
   free(my_table);
 }
 
-/*void string_parser(char *query)
+void string_parser(char *query)
 {
   char *temp = query;
   int ch1 = '=';
@@ -131,6 +131,11 @@ void free_table_new(struct table *my_table, int lines)
             case 1:
               c1.column = x;
             case 2:
+            if(x > 40)
+              {
+                printf("This is filter %d",x);
+                break;
+              }
               c2.table = x;
             case 3:
               c2.column = x;
@@ -185,4 +190,4 @@ void free_table_new(struct table *my_table, int lines)
 
   else
       printf("fail");
-}*/
+}
