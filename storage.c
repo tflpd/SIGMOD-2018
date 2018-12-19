@@ -104,7 +104,7 @@ void free_table_new(struct table *my_table, int lines)
 }
 
 void string_parser(struct query currQuery, struct middle_table *middle, struct table *relations_table, int filterIndex)
-{ 
+{
   int middlesSize = currQuery.size2;
   char *query;
   query = malloc(sizeof(char)*(strlen(currQuery.filters[filterIndex]) + 1));
@@ -131,7 +131,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
           switch(index)
           {
             case 0:
-              c1.table = x;
+              c1.table = currQuery.table_indeces[x];
             case 1:
               c1.column = x;
             case 2:
@@ -141,7 +141,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
                 insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, x, EQUAL);
                 break;
               }
-              c2.table = x;
+              c2.table = currQuery.table_indeces[x];;
             case 3:
               c2.column = x;
               insert_to_middle(middle, relations_table, middlesSize, c1.table, c2.table, c1.column, c2.column);
@@ -164,7 +164,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
         switch(index)
         {
           case 0:
-            c1.table = x;
+            c1.table = currQuery.table_indeces[x];;
           case 1:
             c1.column = x;
           case 2:
@@ -187,7 +187,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
         switch(index)
         {
           case 0:
-            c1.table = x;
+            c1.table = currQuery.table_indeces[x];;
           case 1:
             c1.column = x;
           case 2:
@@ -197,7 +197,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
       }
       index ++;
     }
-    printf("table 1| %d %d ",c1.table,c1.column);
+    //printf("table 1| %d %d ",c1.table,c1.column);
   }
 
   else
