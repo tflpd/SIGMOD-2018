@@ -2001,10 +2001,10 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
 				{
 					for(int j=0; j<participants; j++)
 					{
-						temp_rows_id[j][data] = middle[position].rows_id[j][i];
-						data++;
+						temp_rows_id[j][position_of_temp] = middle[position].rows_id[j][i];
+						//data++;
 					}
-					data = 0;
+					position_of_temp++;
 				}
 			}
 		for(i=0; i<participants; i++)
