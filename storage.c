@@ -11,9 +11,9 @@ struct relation * store_data(char *my_file)
   fp = fopen(my_file,"r");
 
   fread(&n_tuples, sizeof(u_int64_t) , 1,fp);
-  printf("\n\t%ld\n",n_tuples);
+  //printf("\n\t%ld\n",n_tuples);
   fread(&relations,sizeof(u_int64_t),1,fp);
-  printf("\n\t%ld\n",relations);
+  //printf("\n\t%ld\n",relations);
   r = malloc(sizeof(struct relation)*relations);
   //printf("\n\t%d\n",n_tuples);
   for(int i=0; i<relations; i++)
@@ -43,7 +43,7 @@ int parse_workloads(char * name, struct table *new_table)
   fp = fopen(name,"r");
   while(fscanf(fp,"%10s", temp) == 1)
   {
-    printf("%d\n",i);
+    //printf("%d\n",i);
     puts(temp);
     fp_temp = fopen(temp,"r");
     fread(&new_table[i].tuples, sizeof(u_int64_t), 1, fp_temp);
@@ -152,7 +152,7 @@ void string_parser(char *query, struct middle_table *middle, struct table *relat
   else if ((my_operator = strchr(query,ch2)) != NULL)
   {
     //printf("%s",my_operator);
-    for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
+    for(; query<p_end && sscanf(query, "%[^.<]%n", &buf, &n); query += (n+1))
     {
       int x;
       if(sscanf(buf, "%d", &x))
@@ -175,7 +175,7 @@ void string_parser(char *query, struct middle_table *middle, struct table *relat
   else if((my_operator = strchr(query,ch3)) != NULL)
   {
     //printf("%s",my_operator);
-    for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
+    for(; query<p_end && sscanf(query, "%[^.>]%n", &buf, &n); query += (n+1))
     {
       int x;
       if(sscanf(buf, "%d", &x))
