@@ -2000,11 +2000,12 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 			string_parser(my_batch->queries[i], middle, relations_table, j);
 		}
 		struct middle_table mergedMiddle;
-		for(int i=0; i<=my_batch->queries[i].size2; i++)
+		for(int j=0; j < my_batch->queries[i].size2; j++)
 		{
-			if(middle[i].numb_of_parts > 0)
+			if(middle[j].numb_of_parts > 0)
 			{
-				mergedMiddle = middle[i];
+				printf("EXW\n");
+				mergedMiddle = middle[j];
 			}
 		}
 		// 	TO MERGED MIDDLE EINAI TO KELI STO OPIO EXOUN SIGLINEI OLA TA MIDDLE TABLES STO TELOS
