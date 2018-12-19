@@ -157,4 +157,5 @@ struct result *scanRelations(struct relation *relationR, struct relation *relati
 struct result *filterPredicate(struct relation *relationR, int comparingValue, int comparingMode);
 int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections);
 void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery);
+void executeBatch(struct batch *my_batch,struct table *relations_table);
 #endif

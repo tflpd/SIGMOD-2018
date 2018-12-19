@@ -1,5 +1,6 @@
 #include "structs.h"
 #include "myList.h"
+#include "storage.h"
 
 /*---------------------------- FIRST PART RE WRITTEN ----------------------------*/
 
@@ -1507,8 +1508,8 @@ int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** project
 // Added extra functionality, calculating the checksums in the same time as printing
 void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery){
 	// Allocate a checkSum array as big as the number of projections
-	int *checkSum;
-	checkSum = calloc(currQuery.size3, sizeof(int));
+	u_int64_t *checkSum;
+	checkSum = calloc(currQuery.size3, sizeof(u_int64_t));
 
 	// If there are no rows in the final middle table
 	if (mergedMiddle->rows_size == 0)
@@ -1543,7 +1544,7 @@ void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table
 		}
 		for (int i = 0; i < currQuery.size3; ++i)
 		{
-			printf("%d ", checkSum[i]);
+			printf("%ld ", checkSum[i]);
 		}
 		printf("\n");
 		free(checkSum);
@@ -1562,7 +1563,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		just add the two arrays in middle*/
 		//	AKOMA KAI EDW OTAN EINAI TO PRWTO EVER DEN PREPEI NA KALEITAI TO RADIX HASH JOIN KAI NA
 		//	DIMIOURGOUME TO PRWTO ENDIAMESO ME TA APOTELESMATA TOU?
-		if(middle[0].numb_of_parts == 0)
+		/*if(middle[0].numb_of_parts == 0)
 		{
 			middle[0].participants = malloc(sizeof(int)*2);
 			middle[0].participants[0] = relation1;
@@ -1570,7 +1571,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			middle[0].numb_of_parts = 2;
 			return;
 
-		}
+		}*/
 		//general search for partcipants
 		for (int i=0; i<size; i++)
 		{
@@ -1762,40 +1763,40 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		but they are in different cells of middle table*/
 		else if(relation_position1 != relation_position2)
 		{
-      int *temp1, *temp2;
-			struct relation *temp_rel1, *temp_rel2;
-			int i;
-      int position_of_temp;
-			int index;
-      int data =0;
-			struct result* join_result;
-			// No need to add/merge anything to the middle.participants table because the relations are already in
-			temp_rel1 = malloc(sizeof(struct relation));
-			temp_rel1->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
-			for(int i=0; i<middle[position1].rows_size; i++)
-			{
-				index = middle[position1].rows_id[relation_position1][i];
-				temp_rel1->tuples[i].key = index;
-				temp_rel1->tuples[i].payload = table[relation1].my_relation[c1].tuples[index].payload;
+		int *temp1, *temp2;
+		struct relation *temp_rel1, *temp_rel2;
+		int i;
+		int position_of_temp;
+		int index;
+		int data =0;
+		struct result* join_result;
+		// No need to add/merge anything to the middle.participants table because the relations are already in
+		temp_rel1 = malloc(sizeof(struct relation));
+		temp_rel1->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
+		for(int i=0; i<middle[position1].rows_size; i++)
+		{
+			index = middle[position1].rows_id[relation_position1][i];
+			temp_rel1->tuples[i].key = index;
+			temp_rel1->tuples[i].payload = table[relation1].my_relation[c1].tuples[index].payload;
 
-			}
-			temp_rel2 = malloc(sizeof(struct relation));
-			temp_rel2->tuples = malloc(sizeof(struct tuple)*middle[position2].rows_size);
-			for(int i=0; i<middle[position2].rows_size; i++)
-			{
-				index = middle[position2].rows_id[relation_position2][i];
-				temp_rel2->tuples[i].key = index;
-				temp_rel2->tuples[i].payload = table[relation2].my_relation[c2].tuples[index].payload;
+		}
+		temp_rel2 = malloc(sizeof(struct relation));
+		temp_rel2->tuples = malloc(sizeof(struct tuple)*middle[position2].rows_size);
+		for(int i=0; i<middle[position2].rows_size; i++)
+		{
+			index = middle[position2].rows_id[relation_position2][i];
+			temp_rel2->tuples[i].key = index;
+			temp_rel2->tuples[i].payload = table[relation2].my_relation[c2].tuples[index].payload;
 
-			}
-      join_result = RadixHashJoin(temp_rel1, temp_rel2);
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////EDIT ROWS ID FOR THE FIRST RELATION////////////////////////////////////
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////
-      int **temp_rows_id;
-      int participants = middle[relation_position1].numb_of_parts;
-      position_of_temp =0;
-      for(i=0; i<middle[position1].rows_size; i++)
+		}
+		join_result = RadixHashJoin(temp_rel1, temp_rel2);
+		///////////////////////////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////EDIT ROWS ID FOR THE FIRST RELATION////////////////////////////////////
+		///////////////////////////////////////////////////////////////////////////////////////////////////////
+		int **temp_rows_id;
+		int participants = middle[relation_position1].numb_of_parts;
+		position_of_temp =0;
+		for(i=0; i<middle[position1].rows_size; i++)
 			{
 				if(middle[position1].rows_id[relation_position1][i] == join_result->rowIDsR[position_of_temp])
 				{
@@ -1807,20 +1808,20 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 					data = 0;
 				}
 			}
-      for(i=0; i<participants; i++)
-      {
-        free(middle[position1].rows_id[i]);
-      }
-      free(middle[position1].rows_id);
-      middle[position1].rows_id = temp_rows_id;
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////EDIT ROWS ID FOR THE SECOND RELATION///////////////////////////////////
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////
-      int r2_participants = middle[relation_position2].numb_of_parts;
-      int **temp_rows_id_r2;
-      position_of_temp =0;
-      data =0;
-      for(i=0; i<middle[position2].rows_size; i++)
+		for(i=0; i<participants; i++)
+		{
+		free(middle[position1].rows_id[i]);
+		}
+		free(middle[position1].rows_id);
+		middle[position1].rows_id = temp_rows_id;
+		///////////////////////////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////EDIT ROWS ID FOR THE SECOND RELATION///////////////////////////////////
+		///////////////////////////////////////////////////////////////////////////////////////////////////////
+		int r2_participants = middle[relation_position2].numb_of_parts;
+		int **temp_rows_id_r2;
+		position_of_temp =0;
+		data =0;
+		for(i=0; i<middle[position2].rows_size; i++)
 			{
 				if(middle[position2].rows_id[relation_position2][i] == join_result->rowIDsS[position_of_temp])
 				{
@@ -1832,67 +1833,84 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 					data = 0;
 				}
 			}
-      for(i=0; i<participants; i++)
-      {
-        free(middle[position2].rows_id[i]);
-      }
-      free(middle[position2].rows_id);
-      middle[position2].rows_id = temp_rows_id_r2;
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      ////////////////////////////////////////////MERGE THEM//////////////////////////////////////////////////////
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      int **merged_rows_id;
-      int *merged_participants;
-      middle[position1].numb_of_parts = participants + r2_participants;
-      int merged_parts = participants + r2_participants;
-      merged_rows_id = malloc(sizeof(int)*merged_parts);
-      merged_participants = malloc(sizeof(int)*merged_parts);
-      //in the following 2 lines, i used pointer arithmetics to memcpy (Possible seg )!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      memcpy(merged_participants, middle[position1].participants, sizeof(int)*participants);
-      memcpy(merged_participants + sizeof(int)*participants, middle[position2].participants, sizeof(int)*r2_participants);
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      //////////////////////////////Copy the relation1's row_id array in the merged one/////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      for(i=0; i<participants; i++)
-      {
-        merged_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
-        memcpy(merged_rows_id[i], middle[position1].rows_id[i], sizeof(int)*join_result->numRows);
-      }
-      ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      //////////////////////////////Copy the relation2's row_id array in the merged one/////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      for(i=participants; i<r2_participants; i++)
-      {
-        merged_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
-        memcpy(merged_rows_id[i], middle[position2].rows_id[i], sizeof(int)*join_result->numRows);
-      }
-      ////////////////////////////////////////////////////////////////////////
-      ////////////////////// free relation1 row_id/////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-      for(i=0; i<participants; i++)
-      {
-        free(middle[position1].rows_id[i]);
-      }
-      free(middle[position1].rows_id);
-      ////////////////////////////////////////////////////////////////////////
-      ////////////////////// free relation2 row_id/////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-      for(i=0; i<r2_participants; i++)
-      {
-        free(middle[position2].rows_id[i]);
-      }
-      free(middle[position2].rows_id);
-      free(middle[position2].participants);
-      middle[position2].numb_of_parts = 0;
-      ////////////////////////////////////////////////////////////////////////////////
-      /////////////////////////////////////merge/////////////////////////////////////
-      //////////////////////////////////////////////////////////////////////////////////
-      middle[position1].numb_of_parts = participants + r2_participants;
-      middle[position1].rows_id = merged_rows_id;
-      middle[position1].rows_size = join_result->numRows;
+		for(i=0; i<participants; i++)
+		{
+		free(middle[position2].rows_id[i]);
+		}
+		free(middle[position2].rows_id);
+		middle[position2].rows_id = temp_rows_id_r2;
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////MERGE THEM//////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		int **merged_rows_id;
+		int *merged_participants;
+		middle[position1].numb_of_parts = participants + r2_participants;
+		int merged_parts = participants + r2_participants;
+		merged_rows_id = malloc(sizeof(int)*merged_parts);
+		merged_participants = malloc(sizeof(int)*merged_parts);
+		//in the following 2 lines, i used pointer arithmetics to memcpy (Possible seg )!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		memcpy(merged_participants, middle[position1].participants, sizeof(int)*participants);
+		memcpy(merged_participants + sizeof(int)*participants, middle[position2].participants, sizeof(int)*r2_participants);
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////Copy the relation1's row_id array in the merged one/////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		for(i=0; i<participants; i++)
+		{
+		merged_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
+		memcpy(merged_rows_id[i], middle[position1].rows_id[i], sizeof(int)*join_result->numRows);
+		}
+		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//////////////////////////////Copy the relation2's row_id array in the merged one/////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		for(i=participants; i<r2_participants; i++)
+		{
+		merged_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
+		memcpy(merged_rows_id[i], middle[position2].rows_id[i], sizeof(int)*join_result->numRows);
+		}
+		////////////////////////////////////////////////////////////////////////
+		////////////////////// free relation1 row_id/////////////////////////////
+		/////////////////////////////////////////////////////////////////////////
+		for(i=0; i<participants; i++)
+		{
+		free(middle[position1].rows_id[i]);
+		}
+		free(middle[position1].rows_id);
+		////////////////////////////////////////////////////////////////////////
+		////////////////////// free relation2 row_id/////////////////////////////
+		/////////////////////////////////////////////////////////////////////////
+		for(i=0; i<r2_participants; i++)
+		{
+		free(middle[position2].rows_id[i]);
+		}
+		free(middle[position2].rows_id);
+		free(middle[position2].participants);
+		middle[position2].numb_of_parts = 0;
+		////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////merge/////////////////////////////////////
+		//////////////////////////////////////////////////////////////////////////////////
+		middle[position1].numb_of_parts = participants + r2_participants;
+		middle[position1].rows_id = merged_rows_id;
+		middle[position1].rows_size = join_result->numRows;
 
 
 
 		}
 
+}
+
+void executeBatch(struct batch *my_batch,struct table *relations_table){
+	for (int i = 0; i < my_batch->numQueries; ++i)
+	{
+		// ISWS NA TO STELNOUME ME &MIDDLE
+		struct middle_table *middle;
+		middle = create_middle_table(my_batch->queries[i].size2);
+		for (int j = 0; j < my_batch->queries[i].size2; ++j)
+		{
+			string_parser(my_batch->queries[i].filters[j], middle, relations_table, my_batch->queries[i].size2);
+		}
+		struct middle_table mergedMiddle;
+		// 	TO MERGED MIDDLE EINAI TO KELI STO OPIO EXOUN SIGLINEI OLA TA MIDDLE TABLES STO TELOS
+		// NOTE TO SELF NA PROSTHESW MERGERER LATER
+		printQueryAndCheckSumResult(&mergedMiddle, relations_table, my_batch->queries[i]);
+	}
 }

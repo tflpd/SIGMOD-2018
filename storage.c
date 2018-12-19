@@ -103,7 +103,7 @@ void free_table_new(struct table *my_table, int lines)
   free(my_table);
 }
 
-void string_parser(char *query)
+void string_parser(char *query, struct middle_table *middle, struct table *relations_table, int middlesSize)
 {
   char *temp = query;
   int ch1 = '=';
@@ -134,6 +134,7 @@ void string_parser(char *query)
             if(x > 40)
               {
                 printf("This is filter %d",x);
+                //insert_to_middlePred(middle, relations_table, )
                 break;
               }
               c2.table = x;
@@ -144,6 +145,7 @@ void string_parser(char *query)
         index ++;
       }
       //printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
+      insert_to_middle(middle, relations_table, middlesSize, c1.table, c2.table, c1.column, c2.column);
     }
 
   else if ((my_operator = strchr(query,ch2)) != NULL)
