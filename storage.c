@@ -123,6 +123,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
 
   if((my_operator = strchr(query,ch1)) != NULL)
     {
+      int comparison_value;
       for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
       {
         int x;
@@ -135,27 +136,27 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
             case 1:
               c1.column = x;
             case 2:
-            if(x > 40)
-              {
-                printf("This is filter %d",x);
-                insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, x, EQUAL);
-                break;
-              }
-              c2.table = currQuery.table_indeces[x];;
+              comparison_value = x;
             case 3:
               c2.column = x;
-              insert_to_middle(middle, relations_table, middlesSize, c1.table, c2.table, c1.column, c2.column);
           }
         }
         index ++;
       }
       //printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
-
+      if(comparison_value > 50)
+        insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, comparison_value, EQUAL);
+      else
+      {
+        c2.table = currQuery.table_indeces[comparison_value];
+        insert_to_middle(middle, relations_table, middlesSize, c1.table, c2.table, c1.column, c2.column);
+      }
     }
 
   else if ((my_operator = strchr(query,ch2)) != NULL)
   {
     //printf("%s",my_operator);
+    int comparison_value;
     for(; query<p_end && sscanf(query, "%[^.<]%n", &buf, &n); query += (n+1))
     {
       int x;
@@ -168,20 +169,24 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
           case 1:
             c1.column = x;
           case 2:
-            insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, x, LESS);
+            comparison_value = 0;
         }
       }
       index ++;
     }
+    insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, comparison_value, LESS);
     //printf("table 1| %d %d ",c1.table,c1.column);
   }
 
   else if((my_operator = strchr(query,ch3)) != NULL)
   {
+    int comparison_value;
+    int flag =0;
     //printf("%s",my_operator);
     for(; query<p_end && sscanf(query, "%[^.>]%n", &buf, &n); query += (n+1))
     {
       int x;
+
       if(sscanf(buf, "%d", &x))
       {
         switch(index)
@@ -191,13 +196,13 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
           case 1:
             c1.column = x;
           case 2:
-            insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, x, BIGGER);
-
+            comparison_value = x;
         }
       }
       index ++;
     }
-    //printf("table 1| %d %d ",c1.table,c1.column);
+    insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, comparison_value, BIGGER);
+    //printf("table 1| %d %d %d",c1.table,c1.column, temp);
   }
 
   else

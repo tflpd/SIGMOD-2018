@@ -1582,13 +1582,13 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			//relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)
 			/*Each relation is going in only one place of our middle array so we dont need to
 			worry about the next itterations*/
-			if(find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)){
+			if((relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)) >= 0){
 					position1 = i;
-					relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts);
+					//relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts);
 			}
-			if(find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)){
+			if((relation_position2 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)) >= 0){
 					position2 = i;
-					relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts);
+					//relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts);
 			}
 			if(middle[i].numb_of_parts == 0){
 				if(flag == 0){
@@ -1936,9 +1936,9 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     //relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)
     /*Each relation is going in only one place of our middle array so we dont need to
     worry about the next itterations*/
-    if(find_relation(relation, middle[i].participants, middle[i].numb_of_parts)){
+    if((relation_position = find_relation(relation, middle[i].participants, middle[i].numb_of_parts)) >= 0){
         position = i;
-        relation_position = find_relation(relation, middle[i].participants, middle[i].numb_of_parts);
+        //relation_position = find_relation(relation, middle[i].participants, middle[i].numb_of_parts);
     }
 
     if(middle[i].numb_of_parts == 0){
