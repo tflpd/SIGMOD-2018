@@ -11,9 +11,9 @@ struct relation * store_data(char *my_file)
   fp = fopen(my_file,"r");
 
   fread(&n_tuples, sizeof(u_int64_t) , 1,fp);
-  //printf("\n\t%ld\n",n_tuples);
+  //printf("PEKOS\n\t%ld\n",n_tuples);
   fread(&relations,sizeof(u_int64_t),1,fp);
-  //printf("\n\t%ld\n",relations);
+  //printf("PEKOS\n\t%ld\n",relations);
   r = malloc(sizeof(struct relation)*relations);
   //printf("\n\t%d\n",n_tuples);
   for(int i=0; i<relations; i++)
