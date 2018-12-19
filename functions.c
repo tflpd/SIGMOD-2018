@@ -1627,7 +1627,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				middle[first_empty].numb_of_parts = 2;
 
 				join_result = RadixHashJoin(&table[relation1].my_relation[c1],&table[relation2].my_relation[c2]);
-				middle[first_empty].rows_id = malloc(sizeof(int)*2);
+				middle[first_empty].rows_id = malloc(sizeof(int *)*2);
 				middle[first_empty].rows_id[0] = malloc(sizeof(int)*join_result->numRows);
 				middle[first_empty].rows_id[1] = malloc(sizeof(int)*join_result->numRows);
 				memcpy(middle[first_empty].rows_id[0], join_result->rowIDsR, sizeof(int)*join_result->numRows);
@@ -1663,7 +1663,11 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			join_result = RadixHashJoin(&table[relation1].my_relation[c1], temp_rel);
 			int **temp_rows_id;
 			int position_of_temp=0, data=0;
-			temp_rows_id = malloc(sizeof(int)*participants);
+			temp_rows_id = malloc(sizeof(int *)*participants);
+      for(int i=0; i<participants; i++)
+      {
+        temp_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
+      }
 			for(i=0; i<middle[position2].rows_size; i++)
 			{
 			  if(middle[position2].rows_id[relation_position2][i] == join_result->rowIDsR[position_of_temp])
@@ -1711,7 +1715,11 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			join_result = RadixHashJoin(&table[relation2].my_relation[c2], temp_rel);
 			int **temp_rows_id;
 			int position_of_temp=0, data=0;
-			temp_rows_id = malloc(sizeof(int)*participants);
+			temp_rows_id = malloc(sizeof(int *)*participants);
+      for(int i=0; i<participants; i++)
+      {
+        temp_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
+      }
 			for(i=0; i<middle[position1].rows_size; i++)
 			{
 				if(middle[position1].rows_id[relation_position1][i] == join_result->rowIDsR[position_of_temp])
@@ -1801,6 +1809,11 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		int **temp_rows_id;
 		int participants = middle[relation_position1].numb_of_parts;
 		position_of_temp =0;
+    temp_rows_id = malloc(sizeof(int *)*participants);
+    for(int i=0; i<participants; i++)
+    {
+      temp_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
+    }
 		for(i=0; i<middle[position1].rows_size; i++)
 			{
 				if(middle[position1].rows_id[relation_position1][i] == join_result->rowIDsR[position_of_temp])
@@ -1824,6 +1837,11 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
 		int r2_participants = middle[relation_position2].numb_of_parts;
 		int **temp_rows_id_r2;
+    temp_rows_id_r2 = malloc(sizeof(int *)*r2_participants);
+    for(int i=0; i<r2_participants; i++)
+    {
+      temp_rows_id_r2[i] = malloc(sizeof(int)*join_result->numRows);
+    }
 		position_of_temp =0;
 		data =0;
 		for(i=0; i<middle[position2].rows_size; i++)
@@ -1851,7 +1869,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		int *merged_participants;
 		middle[position1].numb_of_parts = participants + r2_participants;
 		int merged_parts = participants + r2_participants;
-		merged_rows_id = malloc(sizeof(int)*merged_parts);
+		merged_rows_id = malloc(sizeof(int *)*merged_parts);
 		merged_participants = malloc(sizeof(int)*merged_parts);
 		//in the following 2 lines, i used pointer arithmetics to memcpy (Possible seg )!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		memcpy(merged_participants, middle[position1].participants, sizeof(int)*participants);
@@ -1951,6 +1969,7 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
   }
   else
   {
+    printf("first_empty = %d \n",first_empty);
     struct result *filter_result;
     struct relation *temp_rel;
     int index;
