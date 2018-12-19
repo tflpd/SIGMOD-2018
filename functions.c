@@ -1535,18 +1535,17 @@ void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table
 			for (int j = 0; j < currQuery.size3; ++j)
 			{
 				// Find the id of the relation to be projected
-				int relationProjectionID = currQuery.projections[j][0];
+				int relationProjectionID = currQuery.table_indeces[currQuery.projections[j][0]];
 				// Find the id of the column of that relation to be projected
 				int columnProjectionID = currQuery.projections[j][1];
 				// Find the id of the row of that relation to be projected
 				int rowProjectionID = mergedMiddle->rows_id[projectionsIndeces[j]][i];
-				//printf("To id einai : %d\n", rowProjectionID);
 				// And print it or I hope so
 				int value = table[relationProjectionID].my_relation[columnProjectionID].tuples[rowProjectionID].payload;
-				//printf("%d ", value);
+				printf("%d ", value);
 				checkSum[j] += value;
 			}
-			//printf("\n");
+			printf("\n");
 		}
 		printf("The checkSum is:\n");
 		for (int i = 0; i < currQuery.size3; ++i)
@@ -1618,7 +1617,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 
 				// Noteworthy that in such a case the rows id's of both R and S are the same since we have only one relation
 				join_result = scanRelations(&table[relation1].my_relation[c1], &table[relation2].my_relation[c2]);
-				middle[first_empty].rows_id = malloc(sizeof(int));
+				middle[first_empty].rows_id = malloc(sizeof(int *));
 				middle[first_empty].rows_id[0] = malloc(sizeof(int)*join_result->numRows);
 				memcpy(middle[first_empty].rows_id[0], join_result->rowIDsR, sizeof(int)*join_result->numRows);
 				middle[first_empty].rows_size = join_result->numRows;
