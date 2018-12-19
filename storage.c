@@ -103,8 +103,12 @@ void free_table_new(struct table *my_table, int lines)
   free(my_table);
 }
 
-void string_parser(char *query, struct middle_table *middle, struct table *relations_table, int middlesSize)
-{
+void string_parser(struct query currQuery, struct middle_table *middle, struct table *relations_table, int filterIndex)
+{ 
+  int middlesSize = currQuery.size2;
+  char *query;
+  query = malloc(sizeof(char)*(strlen(currQuery.filters[filterIndex]) + 1));
+  strcpy(query, currQuery.filters[filterIndex]);
   char *temp = query;
   int ch1 = '=';
   int ch2 = '<';
@@ -198,4 +202,6 @@ void string_parser(char *query, struct middle_table *middle, struct table *relat
 
   else
       printf("fail");
+
+  free(query);
 }

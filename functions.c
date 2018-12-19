@@ -1974,7 +1974,7 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 		middle = create_middle_table(my_batch->queries[i].size2);
 		for (int j = 0; j < my_batch->queries[i].size2; ++j)
 		{
-			string_parser(my_batch->queries[i].filters[j], middle, relations_table, my_batch->queries[i].size2);
+			string_parser(my_batch->queries[i], middle, relations_table, j);
 		}
 		struct middle_table mergedMiddle;
 		for(int i=0; i<=my_batch->queries[i].size2; i++)

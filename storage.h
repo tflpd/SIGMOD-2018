@@ -13,6 +13,6 @@ int parse_workloads(char *, struct table *);
 int count_lines(char *);
 struct table * create_table_new(char *);
 void free_table_new(struct table *, int);
-void string_parser(char *query, struct middle_table *middle, struct table *relations_table, int middlesSize);
+void string_parser(struct query currQuery, struct middle_table *middle, struct table *relations_table, int filterIndex);
 
 #endif
