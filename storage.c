@@ -208,5 +208,8 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
   else
       printf("fail");
 
-  free(query);
+  /*if (query != NULL)
+  {
+    free(query);
+  }*/
 }
