@@ -1678,11 +1678,12 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			  {
 			    for(int j=0; j<participants-1; j++)
 			    {
-			      temp_rows_id[j][data] = middle[position2].rows_id[j][i];
-			      data++;
+			      temp_rows_id[j][position_of_temp] = middle[position2].rows_id[j][i];
+			      //data++;
 			    }
-			    data = 0;
+          position_of_temp++;
 			  }
+        //position_of_temp = 0;
 			}
 			free(middle[position2].rows_id);
 			for(i=0; i<participants-1; i++)
@@ -1730,10 +1731,10 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				{
 					for(int j=0; j<participants-1; j++)
 					{
-						temp_rows_id[j][data] = middle[position1].rows_id[j][i];
-						data++;
+						temp_rows_id[j][position_of_temp] = middle[position1].rows_id[j][i];
+						//data++;
 					}
-					data = 0;
+					position_of_temp = 0;
 				}
 			}
 			for(i=0; i<participants-1; i++)
@@ -1824,10 +1825,10 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				{
 					for(int j=0; j<participants; j++)
 					{
-						temp_rows_id[j][data] = middle[position1].rows_id[j][i];
-						data++;
+						temp_rows_id[j][position_of_temp] = middle[position1].rows_id[j][i];
+						//data++;
 					}
-					data = 0;
+					position_of_temp++;
 				}
 			}
 		for(i=0; i<participants; i++)
@@ -1852,12 +1853,12 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			{
 				if(middle[position2].rows_id[relation_position2][i] == join_result->rowIDsS[position_of_temp])
 				{
-					for(int j=0; j<participants; j++)
+					for(int j=0; j<r2_participants; j++)
 					{
-						temp_rows_id_r2[j][data] = middle[position2].rows_id[j][i];
-						data++;
+						temp_rows_id_r2[j][position_of_temp] = middle[position2].rows_id[j][i];
+						//data++;
 					}
-					data = 0;
+					position_of_temp++;
 				}
 			}
 		for(i=0; i<participants; i++)
