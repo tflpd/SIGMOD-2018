@@ -1697,11 +1697,11 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			int i;
 			int index;
 			struct result* join_result;
-			int participants = middle[relation_position1].numb_of_parts;
-			temp = malloc(sizeof(int)*middle[relation_position1].numb_of_parts);
-			memcpy(temp, middle[relation_position1].participants, sizeof(int)*(participants-1));
-			free(middle[relation_position1].participants);
-			middle[relation_position1].participants = temp;
+			int participants = middle[position1].numb_of_parts;
+			temp = malloc(sizeof(int)*middle[position1].numb_of_parts);
+			memcpy(temp, middle[position1].participants, sizeof(int)*(participants-1));
+			free(middle[position1].participants);
+			middle[position1].participants = temp;
 			///////////////////////////////////////////////////////////////
 			temp_rel = malloc(sizeof(struct relation));
 			temp_rel->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
@@ -1807,7 +1807,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		////////////////////////////////EDIT ROWS ID FOR THE FIRST RELATION////////////////////////////////////
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
 		int **temp_rows_id;
-		int participants = middle[relation_position1].numb_of_parts;
+		int participants = middle[position1].numb_of_parts;
 		position_of_temp =0;
     temp_rows_id = malloc(sizeof(int *)*participants);
     for(int i=0; i<participants; i++)
@@ -1835,7 +1835,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
 		////////////////////////////////EDIT ROWS ID FOR THE SECOND RELATION///////////////////////////////////
 		///////////////////////////////////////////////////////////////////////////////////////////////////////
-		int r2_participants = middle[relation_position2].numb_of_parts;
+		int r2_participants = middle[position2].numb_of_parts;
 		int **temp_rows_id_r2;
     temp_rows_id_r2 = malloc(sizeof(int *)*r2_participants);
     for(int i=0; i<r2_participants; i++)
@@ -1961,6 +1961,7 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
     middle[first_empty].rows_id = malloc(sizeof(int *));
     middle[first_empty].rows_id[0] = malloc(sizeof(int)*(filter_result->numRows));
+    middle[first_empty].rows_size = filter_result->numRows;
     memcpy(middle[first_empty].rows_id[0], filter_result->rowIDsR, sizeof(int)*filter_result->numRows);
 
   }
@@ -1980,11 +1981,40 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
 
     }
     filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
+    int **temp_rows_id;
+    int data = 0, position_of_temp=0;
+    int i;
+		int participants = middle[position].numb_of_parts;
+		position_of_temp =0;
+    temp_rows_id = malloc(sizeof(int *)*participants);
+    for(int i=0; i<participants; i++)
+    {
+      temp_rows_id[i] = malloc(sizeof(int)*filter_result->numRows);
+    }
+		for(i=0; i<middle[position].rows_size; i++)
+			{
+				if(middle[position].rows_id[position][i] == filter_result->rowIDsR[position_of_temp])
+				{
+					for(int j=0; j<participants; j++)
+					{
+						temp_rows_id[j][data] = middle[position].rows_id[j][i];
+						data++;
+					}
+					data = 0;
+				}
+			}
+		for(i=0; i<participants; i++)
+		{
+		free(middle[position].rows_id[i]);
+		}
+		free(middle[position].rows_id);
+		middle[position].rows_id = temp_rows_id;
+    /*
     free(middle[position].rows_id[0]);
     //free(middle[position].rows_id);
     middle[position].rows_id[0] = malloc(sizeof(int)*filter_result->numRows);
     memcpy(middle[first_empty].rows_id[0], filter_result->rowIDsR, sizeof(int)*filter_result->numRows);
-
+    */
   }
 
 }
