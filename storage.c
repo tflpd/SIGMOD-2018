@@ -152,7 +152,7 @@ void string_parser(char *query, struct middle_table *middle, struct table *relat
   else if ((my_operator = strchr(query,ch2)) != NULL)
   {
     //printf("%s",my_operator);
-    for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
+    for(; query<p_end && sscanf(query, "%[^.<]%n", &buf, &n); query += (n+1))
     {
       int x;
       if(sscanf(buf, "%d", &x))
@@ -175,7 +175,7 @@ void string_parser(char *query, struct middle_table *middle, struct table *relat
   else if((my_operator = strchr(query,ch3)) != NULL)
   {
     //printf("%s",my_operator);
-    for(; query<p_end && sscanf(query, "%[^.=]%n", &buf, &n); query += (n+1))
+    for(; query<p_end && sscanf(query, "%[^.>]%n", &buf, &n); query += (n+1))
     {
       int x;
       if(sscanf(buf, "%d", &x))
