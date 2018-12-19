@@ -156,5 +156,5 @@ struct result* RadixHashJoin(struct relation *relationR, struct relation *relati
 struct result *scanRelations(struct relation *relationR, struct relation *relationS);
 struct result *filterPredicate(struct relation *relationR, int comparingValue, int comparingMode);
 int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections);
-void printQueryResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery);
+void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery);
 #endif

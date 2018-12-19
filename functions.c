@@ -1504,7 +1504,12 @@ int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** project
 // Function that actually takes the last merged middle table and prints the payloads of the rows
 // that are present and the final result. Noteworthy that only the columns mentioned in the projections
 // will be printed and not all that are present in the final mergedMiddle
-void printQueryResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery){
+// Added extra functionality, calculating the checksums in the same time as printing
+void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery){
+	// Allocate a checkSum array as big as the number of projections
+	int *checkSum;
+	checkSum = calloc(currQuery.size3, sizeof(int));
+
 	// If there are no rows in the final middle table
 	if (mergedMiddle->rows_size == 0)
 	{
@@ -1530,10 +1535,18 @@ void printQueryResult(struct middle_table *mergedMiddle, struct table *table, st
 				// Find the id of the row of that relation to be projected
 				int rowProjectionID = mergedMiddle->rows_id[projectionsIndeces[j]][i];
 				// And print it or I hope so
-				printf("%d ", table[relationProjectionID].my_relation[columnProjectionID].tuples[rowProjectionID].payload);
+				int value = table[relationProjectionID].my_relation[columnProjectionID].tuples[rowProjectionID].payload;
+				printf("%d ", value);
+				checkSum[j] += value;
 			}
 			printf("\n");
 		}
+		for (int i = 0; i < currQuery.size3; ++i)
+		{
+			printf("%d ", checkSum[i]);
+		}
+		printf("\n");
+		free(checkSum);
 	}
 }
 
