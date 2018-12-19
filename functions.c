@@ -1977,6 +1977,13 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 			string_parser(my_batch->queries[i].filters[j], middle, relations_table, my_batch->queries[i].size2);
 		}
 		struct middle_table mergedMiddle;
+    for(int i=0; i<=my_batch->queries[i].size2; i++)
+    {
+      if(middle[i].numb_of_parts > 0)
+      {
+          mergedMiddle = middle[i];
+      }
+    }
 		// 	TO MERGED MIDDLE EINAI TO KELI STO OPIO EXOUN SIGLINEI OLA TA MIDDLE TABLES STO TELOS
 		// NOTE TO SELF NA PROSTHESW MERGERER LATER
 		printQueryAndCheckSumResult(&mergedMiddle, relations_table, my_batch->queries[i]);
