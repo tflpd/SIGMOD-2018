@@ -73,7 +73,7 @@ struct middle_table{
 
 struct checkSum
 {
-  int numColumns; // The number of columns for which we 
+  int numColumns; // The number of columns for which we
 };
 
 // A list node

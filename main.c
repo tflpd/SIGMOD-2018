@@ -1,4 +1,5 @@
 #include "structs.h"
+#include "storage.h"
 
 //#define RECORDSNUM 10//1024
 
@@ -6,7 +7,7 @@ int main(int argc, char **argv){
 
 	// int N;			// The exponent
 	// int buckets;	// The total number of buckets (=2^N)
-	
+
 	// int **hist;		// Pointer to the hist arrays
 	// int **psum;		// Pointer to the psum arrays
 
@@ -17,10 +18,11 @@ int main(int argc, char **argv){
 
 	// struct result *results_list = NULL;
 
-	/* Variables for the getline() function that will be used 
+	/* Variables for the getline() function that will be used
 	   to get input from the user. */
 	char *input = NULL; // The input that the user provides
 	size_t n = 0;
+	struct table *relations_table;
 
 	// if(check_args(argc,argv,&buckets,&N) < 0)
 	// 	return -1;
@@ -33,7 +35,7 @@ int main(int argc, char **argv){
 
 	// print_records_no(2,testInputArray);
 	// print_tables(testInputArray,2);
-	
+
 	// if(allocate_final_tables(&finalArray,testInputArray,2) < 0)
 	// 	return -1;
 	// // print_tables(finalArray,2);
@@ -51,7 +53,7 @@ int main(int argc, char **argv){
 
 	// fill_indeces(my_array,buckets,psum,finalArray);
 	// print_index_array(buckets,my_array);
-	
+
 
 
 
@@ -62,6 +64,7 @@ int main(int argc, char **argv){
 
 
 	/* EDW PERNEIS DATA */
+	relations_table = create_table_new("small.init");
 
 	print_welcome_msg(1);
 
@@ -454,4 +457,4 @@ int main(int argc, char **argv){
 	// free_memory(&hist,&psum,2,&testInputArray,&finalArray,&my_array,buckets,
 	// 	&input);
 	return 0;
-}	
+}
