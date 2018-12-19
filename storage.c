@@ -134,18 +134,19 @@ void string_parser(char *query, struct middle_table *middle, struct table *relat
             if(x > 40)
               {
                 printf("This is filter %d",x);
-                //insert_to_middlePred(middle, relations_table, )
+                insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, x, EQUAL);
                 break;
               }
               c2.table = x;
             case 3:
               c2.column = x;
+              insert_to_middle(middle, relations_table, middlesSize, c1.table, c2.table, c1.column, c2.column);
           }
         }
         index ++;
       }
       //printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
-      insert_to_middle(middle, relations_table, middlesSize, c1.table, c2.table, c1.column, c2.column);
+
     }
 
   else if ((my_operator = strchr(query,ch2)) != NULL)
@@ -162,6 +163,8 @@ void string_parser(char *query, struct middle_table *middle, struct table *relat
             c1.table = x;
           case 1:
             c1.column = x;
+          case 2:
+            insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, x, LESS);
         }
       }
       index ++;
@@ -183,6 +186,9 @@ void string_parser(char *query, struct middle_table *middle, struct table *relat
             c1.table = x;
           case 1:
             c1.column = x;
+          case 2:
+            insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, x, BIGGER);
+
         }
       }
       index ++;

@@ -1680,6 +1680,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			}
 			memcpy(temp_rows_id[participants], join_result->rowIDsS, sizeof(int)*join_result->numRows);
 			middle[position2].rows_id = temp_rows_id;
+      middle[position2].rows_size = join_result->numRows;
 		}
 		else if(relation_position2 == -1)
 		{
@@ -1727,6 +1728,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			free(middle[position1].rows_id);
 			memcpy(temp_rows_id[participants], join_result->rowIDsS, sizeof(int)*join_result->numRows);
 			middle[position1].rows_id = temp_rows_id;
+      middle[position1].rows_size = join_result->numRows;
 		}
 				/*in this case both relations participated in a join
 				and they are in the same cell  */
@@ -1895,6 +1897,72 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 
 
 		}
+
+}
+
+void insert_to_middle_predicate(struct middle_table * middle, struct table * table, int size, int relation, int column, int value, int mode)
+{
+  int relation_position = -1;
+  int first_empty = 0;
+  int flag = 0;
+  int position;
+  //	AKOMA KAI EDW OTAN EINAI TO PRWTO EVER DEN PREPEI NA KALEITAI TO RADIX HASH JOIN KAI NA
+  //	DIMIOURGOUME TO PRWTO ENDIAMESO ME TA APOTELESMATA TOU?
+  //general search for partcipants
+  for (int i=0; i<size; i++)
+  {
+    //relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts)
+    //relation_position2 = find_relation(relation2, middle[i].participants, middle[i].numb_of_parts)
+    /*Each relation is going in only one place of our middle array so we dont need to
+    worry about the next itterations*/
+    if(find_relation(relation, middle[i].participants, middle[i].numb_of_parts)){
+        position = i;
+        relation_position = find_relation(relation, middle[i].participants, middle[i].numb_of_parts);
+    }
+
+    if(middle[i].numb_of_parts == 0){
+      if(flag == 0){
+        first_empty = i;
+        flag = 1;
+      }
+    }
+
+  }
+
+  if(relation_position == -1)
+  {
+    struct result *filter_result;
+    middle[first_empty].participants = malloc(sizeof(int));
+    middle[first_empty].participants[0] = relation;
+    middle[first_empty].numb_of_parts = 1;
+    ////////////////////////////////////////////////////////
+    filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
+    middle[first_empty].rows_id = malloc(sizeof(int));
+    middle[first_empty].rows_id[0] = malloc(sizeof(int)*filter_result->numRows);
+    memcpy(middle[first_empty].rows_id[0], filter_result->rowIDsR, sizeof(int)*filter_result->numRows);
+
+  }
+  else
+  {
+    struct result *filter_result;
+    struct relation *temp_rel;
+    int index;
+    temp_rel = malloc(sizeof(struct relation));
+    temp_rel->tuples = malloc(sizeof(struct tuple)*middle[position].rows_size);
+    for(int i=0; i<middle[position].rows_size; i++)
+    {
+      index = middle[position].rows_id[relation_position][i];
+      temp_rel->tuples[i].key = index;
+      temp_rel->tuples[i].payload = table[relation].my_relation[column].tuples[index].payload;
+
+    }
+    filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
+    free(middle[position].rows_id[0]);
+    //free(middle[position].rows_id);
+    middle[position].rows_id[0] = malloc(sizeof(int)*filter_result->numRows);
+    memcpy(middle[first_empty].rows_id[0], filter_result->rowIDsR, sizeof(int)*filter_result->numRows);
+
+  }
 
 }
 
