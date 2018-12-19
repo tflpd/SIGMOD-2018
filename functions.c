@@ -1485,7 +1485,7 @@ struct result *scanRelations(struct relation *relationR, struct relation *relati
 // Function to figure out each projections index in the participants array
 // For example if we have as participants array the 1 5 3 and we need to project
 // 3.1 5.0 projectionsIndeces will be 2 1 (the indeces of the relations to be projected)
-int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections){
+int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections, int *table_indeces){
 	int *projectionsIndeces;
 	projectionsIndeces = malloc(sizeof(int)*numProjections);
 
@@ -1493,7 +1493,7 @@ int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** project
 	{
 		for (int j = 0; j < numb_of_parts; ++j)
 		{
-			if (projections[i][0] == participants[j])
+			if (table_indeces[projections[i][0]] == participants[j])
 			{
 				projectionsIndeces[i] = j;
 				break;
@@ -1514,6 +1514,8 @@ void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table
 	u_int64_t *checkSum;
 	checkSum = calloc(currQuery.size3, sizeof(u_int64_t));
 
+	printf("The results are:\n");
+
 	// If there are no rows in the final middle table
 	if (mergedMiddle->rows_size == 0)
 	{
@@ -1525,7 +1527,7 @@ void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table
 	}else{
 		int *projectionsIndeces;
 		// Find the indeces of the projections requested in the participants table
-		projectionsIndeces = findProjectionsIndeces(mergedMiddle->participants, mergedMiddle->numb_of_parts, currQuery.projections, currQuery.size3);
+		projectionsIndeces = findProjectionsIndeces(mergedMiddle->participants, mergedMiddle->numb_of_parts, currQuery.projections, currQuery.size3, currQuery.table_indeces);
 		// And for each row in the final middle table
 		for (int i = 0; i < mergedMiddle->rows_size; ++i)
 		{
@@ -1538,13 +1540,15 @@ void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table
 				int columnProjectionID = currQuery.projections[j][1];
 				// Find the id of the row of that relation to be projected
 				int rowProjectionID = mergedMiddle->rows_id[projectionsIndeces[j]][i];
+				//printf("To id einai : %d\n", rowProjectionID);
 				// And print it or I hope so
 				int value = table[relationProjectionID].my_relation[columnProjectionID].tuples[rowProjectionID].payload;
-				printf("%d ", value);
+				//printf("%d ", value);
 				checkSum[j] += value;
 			}
-			printf("\n");
+			//printf("\n");
 		}
+		printf("The checkSum is:\n");
 		for (int i = 0; i < currQuery.size3; ++i)
 		{
 			printf("%ld ", checkSum[i]);
@@ -1956,7 +1960,6 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     middle[first_empty].participants = malloc(sizeof(int));
     middle[first_empty].participants[0] = relation;
     middle[first_empty].numb_of_parts = 1;
-    printf("MPIKA %d\n", middle[first_empty].numb_of_parts);
     ////////////////////////////////////////////////////////
     filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
     middle[first_empty].rows_id = malloc(sizeof(int *));
@@ -2034,7 +2037,6 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 		{
 			if(middle[j].numb_of_parts > 0)
 			{
-				printf("EXW\n");
 				mergedMiddle = middle[j];
 			}
 		}

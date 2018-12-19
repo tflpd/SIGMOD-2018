@@ -156,7 +156,7 @@ struct query* create_query(int* table_indeces, int size, char** filters, int siz
 struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS);
 struct result *scanRelations(struct relation *relationR, struct relation *relationS);
 struct result *filterPredicate(struct relation *relationR, int comparingValue, int comparingMode);
-int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections);
+int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections, int *table_indeces);
 void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery);
 void executeBatch(struct batch *my_batch,struct table *relations_table);
 void printQuery(struct query myQuery);
