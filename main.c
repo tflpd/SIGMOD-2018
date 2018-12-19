@@ -73,7 +73,7 @@ int main(int argc, char **argv){
 	while(getline(&input,&n,stdin) != -1){
 
 		// The user wants to retrieve certain data
-		if(strncmp(input,"Query",strlen("Query")) == 0){
+		if(strncmp(input,"Q",strlen("Q")) == 0){
 
 			printf("Enter the query/-ies file name: ");
 			char *queriesFileName = NULL;

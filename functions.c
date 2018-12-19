@@ -818,7 +818,7 @@ void print_welcome_msg(int beginning){
 	if(beginning)
 		printf("Welcome!\n");
 	printf("Please, choose one of the following options:\n");
-	printf("* Query: To retrieve data.\n");
+	printf("* Q: To retrieve data.\n");
 	printf("* Exit: To exit the application.\n");
 }
 
@@ -1938,14 +1938,11 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     middle[first_empty].participants = malloc(sizeof(int));
     middle[first_empty].participants[0] = relation;
     middle[first_empty].numb_of_parts = 1;
+    printf("MPIKA %d\n", middle[first_empty].numb_of_parts);
     ////////////////////////////////////////////////////////
     filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
-    middle[first_empty].rows_id = malloc(sizeof(int));
+    middle[first_empty].rows_id = malloc(sizeof(int *));
     middle[first_empty].rows_id[0] = malloc(sizeof(int)*(filter_result->numRows));
-    if (middle[first_empty].rows_id == NULL)
-    {
-    	perror("Allication prob");
-    }
     memcpy(middle[first_empty].rows_id[0], filter_result->rowIDsR, sizeof(int)*filter_result->numRows);
 
   }
