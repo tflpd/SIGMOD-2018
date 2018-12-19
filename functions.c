@@ -883,6 +883,9 @@ struct query* create_query(int* table_indeces, int size, char** filters, int siz
 		my_query->projections[i][0] = sum[i][0];
 		my_query->projections[i][1] = sum[i][1];
 	}
+
+	my_query->size3 = size_2;
+
 	return my_query;
 }
 
@@ -1938,7 +1941,11 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     ////////////////////////////////////////////////////////
     filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
     middle[first_empty].rows_id = malloc(sizeof(int));
-    middle[first_empty].rows_id[0] = malloc(sizeof(int)*filter_result->numRows);
+    middle[first_empty].rows_id[0] = malloc(sizeof(int)*(filter_result->numRows));
+    if (middle[first_empty].rows_id == NULL)
+    {
+    	perror("Allication prob");
+    }
     memcpy(middle[first_empty].rows_id[0], filter_result->rowIDsR, sizeof(int)*filter_result->numRows);
 
   }
@@ -1988,4 +1995,22 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 		// NOTE TO SELF NA PROSTHESW MERGERER LATER
 		printQueryAndCheckSumResult(&mergedMiddle, relations_table, my_batch->queries[i]);
 	}
+}
+
+void printQuery(struct query myQuery){
+	for (int i = 0; i < myQuery.size1; ++i)
+	{
+		printf("%d ", myQuery.table_indeces[i]);
+	}
+	printf("|");
+	for (int i = 0; i < myQuery.size2; ++i)
+	{
+		printf("%s&", myQuery.filters[i]);
+	}
+	printf("|");
+	for (int i = 0; i < myQuery.size3; ++i)
+	{
+		printf("%d.%d ", myQuery.projections[i][0], myQuery.projections[i][1]);
+	}
+	printf("\n");
 }
