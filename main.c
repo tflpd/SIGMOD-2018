@@ -342,7 +342,7 @@ int main(int argc, char **argv){
 					// Merge the information into query struct
 					struct query* my_query;
 					my_query = create_query(table_indeces, size, filters, size_1, sum, size_2);
-					printQuery(*my_query);
+					//printQuery(*my_query);
 					// Add that struct into the current batch
 					my_batch->numQueries++;
 					my_batch->queries = realloc(my_batch->queries, sizeof(struct query)*(my_batch->numQueries));

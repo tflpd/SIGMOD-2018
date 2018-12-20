@@ -165,7 +165,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
         switch(index)
         {
           case 0:
-            c1.table = currQuery.table_indeces[x];;
+            c1.table = currQuery.table_indeces[x];
           case 1:
             c1.column = x;
           case 2:
@@ -192,7 +192,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
         switch(index)
         {
           case 0:
-            c1.table = currQuery.table_indeces[x];;
+            c1.table = currQuery.table_indeces[x];
           case 1:
             c1.column = x;
           case 2:

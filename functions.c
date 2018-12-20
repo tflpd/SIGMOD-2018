@@ -737,6 +737,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				middle[first_empty].numb_of_parts = 1;
 
 				// Noteworthy that in such a case the rows id's of both R and S are the same since we have only one relation
+				//printf("ARA THA STILW R %d S %d KAI C1 %d C2 %d\n", relation1, relation2, c1,c2);
 				join_result = scanRelations(&table[relation1].my_relation[c1], &table[relation2].my_relation[c2]);
 				middle[first_empty].rows_id = malloc(sizeof(int *));
 				middle[first_empty].rows_id[0] = malloc(sizeof(int)*join_result->numRows);
@@ -785,14 +786,41 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 
 			}
 			join_result = RadixHashJoin(&table[relation1].my_relation[c1], temp_rel);
+			int tempRowCounter = 0;
 			int **temp_rows_id;
 			int position_of_temp=0, data=0;
 			temp_rows_id = malloc(sizeof(int *)*participants);
       for(int i=0; i<participants; i++)
       {
-        temp_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
+        temp_rows_id[i] = malloc(sizeof(int)*middle[position2].rows_size);
       }
-			for(i=0; i<middle[position2].rows_size; i++)
+      		for (int i = 0; i < join_result->numRows; ++i)
+      		{
+      			for (int j = 0; j < middle[position2].rows_size; ++j)
+      			{
+      				if (join_result->rowIDsS[i] == middle[position2].rows_id[relation_position2][j])
+      				{
+      					for (int k = 0; k < participants - 1; ++k)
+      					{
+      						temp_rows_id[k][tempRowCounter] = middle[position2].rows_id[k][j];
+      					}
+      					temp_rows_id[participants][tempRowCounter] = join_result->rowIDsR[i];
+      					tempRowCounter++;
+      				}
+      			}
+      		}
+      		if (tempRowCounter)
+      		{
+      			for (int i = 0; i < participants; ++i)
+      			{
+      				temp_rows_id[i] = realloc(temp_rows_id[i], sizeof(int)*tempRowCounter);
+      				if(temp_rows_id[i] == NULL){
+      					perror("Memory reallocation failed: ");
+      					exit(-1);
+      				}
+      			}	
+      		}
+/*			for(i=0; i<middle[position2].rows_size; i++)
 			{
 			  if(middle[position2].rows_id[relation_position2][i] == join_result->rowIDsR[position_of_temp])
 			  {
@@ -804,15 +832,15 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
           position_of_temp++;
 			  }
         //position_of_temp = 0;
-			}
+			}*/
 			free(middle[position2].rows_id);
 			for(i=0; i<participants-1; i++)
 			{
 			  free(middle[position2].rows_id[i]);
 			}
-			memcpy(temp_rows_id[participants], join_result->rowIDsS, sizeof(int)*join_result->numRows);
+			//memcpy(temp_rows_id[participants], join_result->rowIDsS, sizeof(int)*join_result->numRows);
 			middle[position2].rows_id = temp_rows_id;
-      middle[position2].rows_size = join_result->numRows;
+      middle[position2].rows_size = tempRowCounter;
 		}
 		else if(relation_position2 == -1)
 		{
@@ -1127,7 +1155,7 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     temp_rows_id = malloc(sizeof(int *)*participants);
     for(int i=0; i<participants; i++)
     {
-      temp_rows_id[i] = malloc(sizeof(int)*(filter_result->numRows));
+      temp_rows_id[i] = malloc(sizeof(int)*(middle[position].rows_size));
     }
     for (int i = 0; i < filter_result->numRows; ++i)
     {
