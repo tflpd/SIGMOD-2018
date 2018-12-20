@@ -71,11 +71,6 @@ struct middle_table{
   int numb_of_parts;
 };
 
-struct checkSum
-{
-  int numColumns; // The number of columns for which we
-};
-
 // A list node
 struct lnode {
   int32_t key; // They key/id of that node
@@ -106,46 +101,11 @@ struct batch {
   int numQueries;
 };
 
-int check_args(int, char **, int *, int *);
-int allocate_hist(int **, int);
-int allocate_psum(int **, int);
-int allocate_histograms(int ***, int ***, int, int);
 
-int allocate_a_table(struct relation **, int);
-int allocate_tables(struct relation ***, int, int);
-
-int allocate_a_final_table(struct relation **, int);
-int allocate_final_tables(struct relation ***, struct relation **, int);
-
-void fill_hist(struct relation *, int *, int);
-void fill_psum(int *, int *, int);
-void fill_histograms(struct relation **, int **, int **, int, int);
-
-void rearrange_a_table(struct relation *, struct relation *, int *, int);
-void rearrange_tables(int, struct relation **, struct relation **, int **, int);
-
-void get_min_data(int, int, int **, int *, int *);
 int is_prime(int);
-int allocate_chain(struct index_array *);
-int allocate_bucket(struct index_array *);
-int fill_an_index(struct index_array *, int, int, int **);
-int allocate_index_array(struct index_array **, int, int, int **);
-void fill_indeces(struct index_array *, int, int **, struct relation **);
 
-void print_hist(int **, int, int);
-void print_psum(int **, int, int);
-void print_tables(struct relation **, int);
-void print_index_array(int, struct index_array *);
-void print_records_no(int, struct relation **);
 void print_welcome_msg(int);
 
-int get_user_input(char **, size_t *);
-
-void free_histograms(int ***, int ***, int);
-void free_tables(struct relation ***, struct relation ***,int);
-void free_indeces(struct index_array **, int);
-void free_memory(int ***, int ***, int, struct relation ***,
-  struct relation ***, struct index_array **, int, char **);
 struct middle_table * create_middle_table(int );
 int find_relation(int relation, int *, int);
 void insert_to_middle(struct middle_table *, struct table *, int, int, int, int, int);
