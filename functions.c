@@ -1541,6 +1541,7 @@ void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table
 				// Find the id of the row of that relation to be projected
 				int rowProjectionID = mergedMiddle->rows_id[projectionsIndeces[j]][i];
 				// And print it or I hope so
+				//printf("APO REL %d APO COL %d ROW %d\n", relationProjectionID, columnProjectionID, rowProjectionID);
 				int value = table[relationProjectionID].my_relation[columnProjectionID].tuples[rowProjectionID].payload;
 				printf("%d ", value);
 				checkSum[j] += value;
@@ -1942,6 +1943,7 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     worry about the next itterations*/
     if((relation_position = find_relation(relation, middle[i].participants, middle[i].numb_of_parts)) >= 0){
         position = i;
+        break;
         //relation_position = find_relation(relation, middle[i].participants, middle[i].numb_of_parts);
     }
 
@@ -1970,12 +1972,13 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
   }
   else
   {
-    printf("first_empty = %d \n",first_empty);
+    //printf("first_empty = %d \n",first_empty);
     struct result *filter_result;
     struct relation *temp_rel;
     int index;
     temp_rel = malloc(sizeof(struct relation));
     temp_rel->tuples = malloc(sizeof(struct tuple)*middle[position].rows_size);
+    temp_rel->num_tuples = middle[position].rows_size;
     for(int i=0; i<middle[position].rows_size; i++)
     {
       index = middle[position].rows_id[relation_position][i];
@@ -1983,7 +1986,19 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
       temp_rel->tuples[i].payload = table[relation].my_relation[column].tuples[index].payload;
 
     }
-    filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
+    /*printf("TIPWNW TON IDI ENDIAMSO\n");
+    for(int i=0; i<middle[position].rows_size; i++)
+    {
+      printf("%d %d\n", temp_rel->tuples[i].key, temp_rel->tuples[i].payload);
+    }*/
+    /*printf("SE AFTA THA KANW %d %d\n", mode, value);*/
+    filter_result = filterPredicate(temp_rel, value, mode);
+    /*printf("TIPWNW TO APOTELESMA TOU\n");
+    for (int i = 0; i < filter_result->numRows; ++i)
+    {
+    	printf("%d\n", filter_result->rowIDsR[i]);
+    }*/
+    int tempRowCounter = 0;
     int **temp_rows_id;
     int data = 0, position_of_temp=0;
     int i;
@@ -1992,9 +2007,34 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     temp_rows_id = malloc(sizeof(int *)*participants);
     for(int i=0; i<participants; i++)
     {
-      temp_rows_id[i] = malloc(sizeof(int)*filter_result->numRows);
+      temp_rows_id[i] = malloc(sizeof(int)*(filter_result->numRows));
     }
-		for(i=0; i<middle[position].rows_size; i++)
+    for (int i = 0; i < filter_result->numRows; ++i)
+    {
+    	for (int j = 0; j < middle[position].rows_size; ++j)
+    	{
+    		if (filter_result->rowIDsR[i] == middle[position].rows_id[relation_position][j])
+    		{
+    			for (int k = 0; k < participants; ++k)
+    			{
+    				temp_rows_id[k][tempRowCounter] = middle[position].rows_id[k][j];
+    			}
+    			tempRowCounter++;
+    		}
+    	}
+    }
+    if (tempRowCounter)
+    {
+    	for (int i = 0; i < participants; ++i)
+    	{
+    		temp_rows_id[i] = realloc(temp_rows_id[i], sizeof(int)*tempRowCounter);
+    		if(temp_rows_id[i] == NULL){
+    			perror("Memory reallocation failed: ");
+    			exit(-1);
+    		}
+    	}	
+    }
+		/*for(i=0; i<middle[position].rows_size; i++)
 			{
 				if(middle[position].rows_id[position][i] == filter_result->rowIDsR[position_of_temp])
 				{
@@ -2005,13 +2045,14 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
 					}
 					position_of_temp++;
 				}
-			}
+			}*/
 		for(i=0; i<participants; i++)
 		{
 		free(middle[position].rows_id[i]);
 		}
 		free(middle[position].rows_id);
 		middle[position].rows_id = temp_rows_id;
+		middle[position].rows_size = tempRowCounter;
     /*
     free(middle[position].rows_id[0]);
     //free(middle[position].rows_id);
@@ -2038,6 +2079,7 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 			if(middle[j].numb_of_parts > 0)
 			{
 				mergedMiddle = middle[j];
+				//printf("EVRIKA TON %d\n", j);
 			}
 		}
 		// 	TO MERGED MIDDLE EINAI TO KELI STO OPIO EXOUN SIGLINEI OLA TA MIDDLE TABLES STO TELOS

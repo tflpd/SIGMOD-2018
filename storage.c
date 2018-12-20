@@ -169,7 +169,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
           case 1:
             c1.column = x;
           case 2:
-            comparison_value = 0;
+            comparison_value = x;
         }
       }
       index ++;
