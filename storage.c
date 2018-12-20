@@ -114,6 +114,7 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
   int ch2 = '<';
   int ch3 = '>';
   char *my_operator;
+  char *test_operator;
   size_t s = strlen(query)+1;
   char buf[s];
   const char * p_end = query+s;
@@ -144,12 +145,14 @@ void string_parser(struct query currQuery, struct middle_table *middle, struct t
         index ++;
       }
       //printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
-      if(comparison_value > 50)
-        insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, comparison_value, EQUAL);
-      else
+      if((test_operator = strchr(my_operator,'.')) != NULL)
       {
         c2.table = currQuery.table_indeces[comparison_value];
         insert_to_middle(middle, relations_table, middlesSize, c1.table, c2.table, c1.column, c2.column);
+      }  
+      else
+      {
+        insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, comparison_value, EQUAL);
       }
     }
 
