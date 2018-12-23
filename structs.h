@@ -6,6 +6,7 @@
 #define BIGGER 0 // values used in filterPredicate function to determine the comparing mode
 #define LESS 1 // values used in filterPredicate function to determine the comparing mode
 #define EQUAL 2 // values used in filterPredicate function to determine the comparing mode
+#define JOIN 3 //values used in filterPredicate function to determine the comparing mode
 #define R 1
 #define S 2
 
