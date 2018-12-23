@@ -1112,6 +1112,11 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     middle[first_empty].numb_of_parts = 1;
     ////////////////////////////////////////////////////////
     filter_result = filterPredicate(&table[relation].my_relation[column], value, mode);
+    /*printf("TIPWNW TO APOTELESMA TOU FILTER\n");
+    for (int i = 0; i < filter_result->numRows; ++i)
+    {
+    	printf("%d\n", filter_result->rowIDsR[i]);
+    }*/
     middle[first_empty].rows_id = malloc(sizeof(int *));
     middle[first_empty].rows_id[0] = malloc(sizeof(int)*(filter_result->numRows));
     middle[first_empty].rows_size = filter_result->numRows;
@@ -1141,7 +1146,7 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     }*/
     /*printf("SE AFTA THA KANW %d %d\n", mode, value);*/
     filter_result = filterPredicate(temp_rel, value, mode);
-    /*printf("TIPWNW TO APOTELESMA TOU\n");
+    /*printf("TIPWNW TO APOTELESMA TOU FILTER\n");
     for (int i = 0; i < filter_result->numRows; ++i)
     {
     	printf("%d\n", filter_result->rowIDsR[i]);
