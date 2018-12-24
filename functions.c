@@ -684,7 +684,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		int relation_position1 = -1, relation_position2 = -1;
 		int first_empty = 0;
 		int flag = 0;
-		int position1, position2;
+		int position1 = -1, position2 = -1;
 		/*first case: first join happened none of the tables ever used
 		No need to Iterate over the table in first case
 		just add the two arrays in middle*/
@@ -794,33 +794,33 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		    {
 		      temp_rows_id[i] = malloc(sizeof(int)*middle[position2].rows_size);
 		    }
-      		for (int i = 0; i < join_result->numRows; ++i)
-      		{
-      			for (int j = 0; j < middle[position2].rows_size; ++j)
-      			{
-      				if (join_result->rowIDsS[i] == middle[position2].rows_id[relation_position2][j])
-      				{
-      					for (int k = 0; k < participants - 1; ++k)
-      					{
-      						temp_rows_id[k][tempRowCounter] = middle[position2].rows_id[k][j];
+			for (int i = 0; i < join_result->numRows; ++i)
+			{
+				for (int j = 0; j < middle[position2].rows_size; ++j)
+				{
+					if (join_result->rowIDsS[i] == middle[position2].rows_id[relation_position2][j])
+					{
+						for (int k = 0; k < participants - 1; ++k)
+						{
+							temp_rows_id[k][tempRowCounter] = middle[position2].rows_id[k][j];
 
-      					}
-      					temp_rows_id[participants][tempRowCounter] = join_result->rowIDsR[i];
-      					tempRowCounter++;
-      				}
-      			}
-      		}
-      		if (tempRowCounter)
-      		{
-      			for (int i = 0; i < participants; ++i)
-      			{
-      				temp_rows_id[i] = realloc(temp_rows_id[i], sizeof(int)*tempRowCounter);
-      				if(temp_rows_id[i] == NULL){
-      					perror("Memory reallocation failed: ");
-      					exit(-1);
-      				}
-      			}	
-      		}
+						}
+						temp_rows_id[participants][tempRowCounter] = join_result->rowIDsR[i];
+						tempRowCounter++;
+					}
+				}
+			}
+			if (tempRowCounter)
+			{
+				for (int i = 0; i < participants; ++i)
+				{
+					temp_rows_id[i] = realloc(temp_rows_id[i], sizeof(int)*tempRowCounter);
+					if(temp_rows_id[i] == NULL){
+						perror("Memory reallocation failed: ");
+						exit(-1);
+					}
+				}	
+			}
 /*			for(i=0; i<middle[position2].rows_size; i++)
 			{
 			  if(middle[position2].rows_id[relation_position2][i] == join_result->rowIDsR[position_of_temp])
@@ -882,14 +882,14 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			{
 				for(int j = 0; j < middle[position1].rows_size; j++)
 				{
-					if(join_result->rowIDsS[i] == middle[position1].rows_id[relation_position1][j])
+					if(join_result->rowIDsR[i] == middle[position1].rows_id[relation_position1][j])
 					{
 						for(int k = 0; k < participants-1; k++)
 						{
 							temp_rows_id[k][tempRowCounter] = middle[position1].rows_id[k][j];
 
 						}
-						temp_rows_id[participants][tempRowCounter] = join_result->rowIDsR[i];
+						temp_rows_id[participants][tempRowCounter] = join_result->rowIDsS[i];
                         tempRowCounter++;
 					}
 				}
@@ -912,19 +912,20 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			free(middle[position1].rows_id[i]);
 			}
 			free(middle[position1].rows_id);
-			memcpy(temp_rows_id[participants], join_result->rowIDsS, sizeof(int)*join_result->numRows);
+
 			middle[position1].rows_id = temp_rows_id;
-      		middle[position1].rows_size = join_result->numRows;
+      		middle[position1].rows_size = tempRowCounter;
 		}
 				/*in this case both relations participated in a join
 				and they are in the same cell  */
-		else if(relation_position1 == relation_position2)
+		else if(position1 == position2)
 		{
 			int *temp1, *temp2;
 			struct relation *temp_rel1, *temp_rel2;
 			int i;
 			int index;
 			struct result* join_result;
+			int participants = middle[position1].numb_of_parts;
 			// No need to add/merge anything to the middle.participants table because the relations are already in
 			temp_rel1 = malloc(sizeof(struct relation));
 			temp_rel1->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
@@ -947,10 +948,38 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 
 			join_result = scanRelations(temp_rel1, temp_rel2);
 
+			int **temp_rows_id;
+			temp_rows_id = malloc(sizeof(int *)*participants);
+			for(int i=0; i<participants; i++)
+			{
+				temp_rows_id[i] = malloc(sizeof(int)*(join_result->numRows));
+			}
+
+			for (int i = 0; i < join_result->numRows; ++i)
+			{
+				for (int j = 0; j < middle[position1].rows_size; ++j)
+				{
+					if ((join_result->rowIDsS[i] == middle[position2].rows_id[relation_position2][j]) && (join_result->rowIDsR[i] == middle[position1].rows_id[relation_position1][j]))
+					{
+						for (int k = 0; k < middle[position1].numb_of_parts; ++k)
+						{
+							temp_rows_id[k][i] = middle[position1].rows_id[k][j];
+
+						}
+					}
+				}
+			}
+			for(i=0; i<participants-1; i++)
+			{
+				free(middle[position1].rows_id[i]);
+			}
+			free(middle[position1].rows_id);
+			middle[position1].rows_id = temp_rows_id;
+			middle[position1].rows_size = join_result->numRows;
 		}
 		/*in this case both relations already participated in a join
 		but they are in different cells of middle table*/
-		else if(relation_position1 != relation_position2)
+		else if(position1 != position2)
 		{
 		int *temp1, *temp2;
 		struct relation *temp_rel1, *temp_rel2;
@@ -979,38 +1008,69 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 
 		}
 		join_result = RadixHashJoin(temp_rel1, temp_rel2);
-		///////////////////////////////////////////////////////////////////////////////////////////////////////
-		////////////////////////////////EDIT ROWS ID FOR THE FIRST RELATION////////////////////////////////////
-		///////////////////////////////////////////////////////////////////////////////////////////////////////
+		
 		int **temp_rows_id;
-		int participants = middle[position1].numb_of_parts;
+		int numParticipants1 = middle[position1].numb_of_parts;
+		int numParticipants2 = middle[position2].numb_of_parts;
+		int numParticipants = numParticipants1 + numParticipants2;
+		middle[position1].participants = realloc(middle[position1].participants, sizeof(int)*numParticipants);
+		if(middle[position1].participants == NULL)
+		{
+			perror("Memory reallocation failed: ");
+			exit(-1);
+		}
+		memcpy(middle[position1].participants + sizeof(int)*numParticipants1, middle[position2].participants, sizeof(int)*numParticipants2);
 		position_of_temp =0;
 		int tempRowCounter = 0;
-	    temp_rows_id = malloc(sizeof(int *)*participants);
-	    for(int i=0; i<participants; i++)
-	    {
-	      temp_rows_id[i] = malloc(sizeof(int)*middle[position1].rows_size);
-	    }
+		int currThreshold = join_result->numRows;
+	    temp_rows_id = malloc(sizeof(int *)*numParticipants);
+		for(int i=0; i<numParticipants; i++)
+		{
+			temp_rows_id[i] = malloc(sizeof(int)*currThreshold);
+		}
 		for (int i = 0; i < join_result->numRows; i++)
         {
-            for (int j = 0; j < middle[position1].rows_size; j++)
+            for (int j = 0; j < numParticipants1; j++)
             {
                 if (join_result->rowIDsR[i] == middle[position1].rows_id[relation_position1][j])
                 {
-                    for (int k = 0; k < participants; ++k)
-                    {
-                        temp_rows_id[k][tempRowCounter] = middle[position1].rows_id[k][j];
+                	for (int l = 0; l < numParticipants2; ++l)
+                	{
+                		if (join_result->rowIDsS[i] == middle[position2].rows_id[relation_position2][l])
+                		{
+                			for (int k = 0; k < numParticipants1; ++k)
+                			{
+                			    temp_rows_id[k][tempRowCounter] = middle[position1].rows_id[k][j];
 
-                    }
-                    tempRowCounter++;
+                			}
+                			for (int k = numParticipants1; k < numParticipants2; ++k)
+                			{
+                			    temp_rows_id[k][tempRowCounter] = middle[position2].rows_id[k][l];
 
+                			}
+                			tempRowCounter++;
+                			if (tempRowCounter == currThreshold)
+                			{
+                				currThreshold *=2;
+                				for(int k = 0; k < numParticipants; k++)
+                				{
+                					temp_rows_id[i] = realloc(temp_rows_id[i], sizeof(int)*currThreshold);
+                					if(temp_rows_id[i] == NULL)
+                					{
+                						perror("Memory reallocation failed: ");
+                						exit(-1);
+                					}
+                				}
+                			}
+                		}
+                	}
                 }
             }
          }
 
         if (tempRowCounter)
         {
-        	for (int i = 0; i < participants; ++i)
+        	for (int i = 0; i < numParticipants; ++i)
 			{
 				temp_rows_id[i] = realloc(temp_rows_id[i], sizeof(int)*tempRowCounter);
 				if(temp_rows_id[i] == NULL)
@@ -1020,114 +1080,23 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				}
             }   
         }   
-		for(i=0; i<participants; i++)
+		for(i=0; i<numParticipants1; i++)
 		{
-		free(middle[position1].rows_id[i]);
+			free(middle[position1].rows_id[i]);
 		}
 		free(middle[position1].rows_id);
+		for(i=0; i<numParticipants2; i++)
+		{
+			free(middle[position2].rows_id[i]);
+		}
+		free(middle[position2].rows_id);
+		/* EDW PREPEI NA KANEIS NULL TIN POSITION2 TOU MIDDLE TABLE WSTE MELLONTIKA NA FENETE ADEIA*/
 		middle[position1].rows_id = temp_rows_id;
-		///////////////////////////////////////////////////////////////////////////////////////////////////////
-		////////////////////////////////EDIT ROWS ID FOR THE SECOND RELATION///////////////////////////////////
-		///////////////////////////////////////////////////////////////////////////////////////////////////////
-		int r2_participants = middle[position2].numb_of_parts;
-		int **temp_rows_id_r2;
-		tempRowCounter = 0;
-    	temp_rows_id_r2 = malloc(sizeof(int *)*r2_participants);
-    	
-    	for(int i=0; i<r2_participants; i++)
-        {
-            temp_rows_id[i] = malloc(sizeof(int)*middle[position2].rows_size);
-        }
-        for (int i = 0; i < join_result->numRows; i++)
-        {
-            for (int j = 0; j < middle[position2].rows_size; j++)
-            {
-                if (join_result->rowIDsS[i] == middle[position2].rows_id[relation_position2][j])
-                {
-                    for (int k = 0; k < r2_participants; k++)
-                    {
-                        temp_rows_id[k][tempRowCounter] = middle[position2].rows_id[k][j];
-
-                    }
-                    tempRowCounter++;
-                }
-            }
-        }
-
-        if (tempRowCounter)
-        {
-            for (int i = 0; i < r2_participants; ++i)
-            {
-                temp_rows_id[i] = realloc(temp_rows_id[i], sizeof(int)*tempRowCounter);
-                if(temp_rows_id[i] == NULL){
-                    perror("Memory reallocation failed: ");
-                    exit(-1);
-                }
-            }   
-        }
-
-		for(i=0; i<r2_participants; i++)
-		{
-		free(middle[position2].rows_id[i]);
-		}
-		free(middle[position2].rows_id);
-		middle[position2].rows_id = temp_rows_id_r2;
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		////////////////////////////////////////////MERGE THEM//////////////////////////////////////////////////////
-		////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		int **merged_rows_id;
-		int *merged_participants;
-		middle[position1].numb_of_parts = participants + r2_participants;
-		int merged_parts = participants + r2_participants;
-		merged_rows_id = malloc(sizeof(int *)*merged_parts);
-		merged_participants = malloc(sizeof(int)*merged_parts);
-		//in the following 2 lines, i used pointer arithmetics to memcpy (Possible seg )!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		memcpy(merged_participants, middle[position1].participants, sizeof(int)*participants);
-		memcpy(merged_participants + sizeof(int)*participants, middle[position2].participants, sizeof(int)*r2_participants);
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//////////////////////////////Copy the relation1's row_id array in the merged one/////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		for(i=0; i<participants; i++)
-		{
-		merged_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
-		memcpy(merged_rows_id[i], middle[position1].rows_id[i], sizeof(int)*join_result->numRows);
-		}
-		///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//////////////////////////////Copy the relation2's row_id array in the merged one/////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		for(i=participants; i<r2_participants; i++)
-		{
-		merged_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
-		memcpy(merged_rows_id[i], middle[position2].rows_id[i], sizeof(int)*join_result->numRows);
-		}
-		////////////////////////////////////////////////////////////////////////
-		////////////////////// free relation1 row_id/////////////////////////////
-		/////////////////////////////////////////////////////////////////////////
-		for(i=0; i<participants; i++)
-		{
-		free(middle[position1].rows_id[i]);
-		}
-		free(middle[position1].rows_id);
-		////////////////////////////////////////////////////////////////////////
-		////////////////////// free relation2 row_id/////////////////////////////
-		/////////////////////////////////////////////////////////////////////////
-		for(i=0; i<r2_participants; i++)
-		{
-		free(middle[position2].rows_id[i]);
-		}
-		free(middle[position2].rows_id);
-		free(middle[position2].participants);
-		middle[position2].numb_of_parts = 0;
-		////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////merge/////////////////////////////////////
-		//////////////////////////////////////////////////////////////////////////////////
-		middle[position1].numb_of_parts = participants + r2_participants;
-		middle[position1].rows_id = merged_rows_id;
-		middle[position1].rows_size = join_result->numRows;
-
-
-
-		}
+		middle[position1].rows_size = tempRowCounter;
+		middle[position1].numb_of_parts = numParticipants;
+	}else{
+		printf("KATIPIGELATHOSMAN\n");
+	}
 
 }
 
