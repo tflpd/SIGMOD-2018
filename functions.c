@@ -667,7 +667,7 @@ void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table
 				//printf("%d ", value);
 				checkSum[j] += value;
 			}
-			printf("\n");
+			//printf("\n");
 		}
 		printf("The checkSum is:\n");
 		for (int i = 0; i < currQuery.size3; ++i)
@@ -714,7 +714,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				if(tmp_relation_position1 >= 0){
 					relation_position1 = tmp_relation_position1;
 					position1 = i;
-					printf("MPIKA1\n");
+					printf("MPIKA1 se %d %d\n", position1, relation_position1);
 					//relation_position1 = find_relation(relation1, middle[i].participants, middle[i].numb_of_parts);
 				}
 			}
@@ -798,7 +798,8 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			for(int i=0; i<middle[position2].rows_size; i++)
 			{
 				index = middle[position2].rows_id[relation_position2][i];
-				temp_rel->tuples[i].key = index;
+				//temp_rel->tuples[i].key = index;
+				temp_rel->tuples[i].key = i;
 				temp_rel->tuples[i].payload = table[relation2].my_relation[c2].tuples[index].payload;
 
 			}
@@ -806,13 +807,22 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			int tempRowCounter = 0;
 			int **temp_rows_id;
 			int position_of_temp=0, data=0;
-			int currThreshold = join_result->numRows;
+			//int currThreshold = join_result->numRows;
 			temp_rows_id = malloc(sizeof(int *)*participants);
             for(int i=0; i<participants; i++)
 		    {
-		      temp_rows_id[i] = malloc(sizeof(int)*currThreshold);
+		      //temp_rows_id[i] = malloc(sizeof(int)*currThreshold);
+		    	temp_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
 		    }
-			for (int i = 0; i < join_result->numRows; ++i)
+		    for (int i = 0; i < join_result->numRows; ++i)
+		    {
+		    	for (int j = 0; j < participants - 1; ++j)
+		    	{
+		    		temp_rows_id[j][i] = middle[position2].rows_id[j][join_result->rowIDsS[i]];
+		    	}
+		    	temp_rows_id[participants - 1][i] = join_result->rowIDsR[i];
+		    }
+			/*for (int i = 0; i < join_result->numRows; ++i)
 			{
 				for (int j = 0; j < middle[position2].rows_size; ++j)
 				{
@@ -851,7 +861,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 						exit(-1);
 					}
 				}	
-			}
+			}*/
 /*			for(i=0; i<middle[position2].rows_size; i++)
 			{
 			  if(middle[position2].rows_id[relation_position2][i] == join_result->rowIDsR[position_of_temp])
@@ -872,7 +882,8 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			free(middle[position2].rows_id);
 			//memcpy(temp_rows_id[participants], join_result->rowIDsS, sizeof(int)*join_result->numRows);
 			middle[position2].rows_id = temp_rows_id;
-      		middle[position2].rows_size = tempRowCounter;
+      		//middle[position2].rows_size = tempRowCounter;
+      		middle[position2].rows_size = join_result->numRows;
 		}
 
 		else if(relation_position2 == -1)
@@ -899,7 +910,8 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			for(int i=0; i<middle[position1].rows_size; i++)
 			{
 				index = middle[position1].rows_id[relation_position1][i];
-				temp_rel->tuples[i].key = index;
+				//temp_rel->tuples[i].key = index;
+				temp_rel->tuples[i].key = i;
 				//printf("%d\n", index);
 				temp_rel->tuples[i].payload = table[relation1].my_relation[c1].tuples[index].payload;
 
@@ -922,10 +934,20 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			int currThreshold = join_result->numRows;
 		    for(int i=0; i<participants; i++)
 		    {
-		      temp_rows_id[i] = malloc(sizeof(int)*currThreshold);
+		      //temp_rows_id[i] = malloc(sizeof(int)*currThreshold);
+		    	temp_rows_id[i] = malloc(sizeof(int)*join_result->numRows);
 		    }
 
-			for(int i = 0; i < join_result->numRows; i++)
+		    for (int i = 0; i < join_result->numRows; ++i)
+		    {
+		    	for (int j = 0; j < participants - 1; ++j)
+		    	{
+		    		temp_rows_id[j][i] = middle[position1].rows_id[j][join_result->rowIDsR[i]];
+		    	}
+		    	temp_rows_id[participants - 1][i] = join_result->rowIDsS[i];
+		    }
+
+			/*for(int i = 0; i < join_result->numRows; i++)
 			{
 				for(int j = 0; j < middle[position1].rows_size; j++)
 				{
@@ -968,7 +990,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
                         exit(-1);
                     }
 				}
-			}
+			}*/
 
 			for(i=0; i<participants-1; i++)
 			{
@@ -977,7 +999,8 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			free(middle[position1].rows_id);
 
 			middle[position1].rows_id = temp_rows_id;
-      		middle[position1].rows_size = tempRowCounter;
+      		//middle[position1].rows_size = tempRowCounter;
+      		middle[position1].rows_size = join_result->numRows;
 		}
 				/*in this case both relations participated in a join
 				and they are in the same cell  */
@@ -1228,29 +1251,88 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     struct result *filter_result;
     struct relation *temp_rel;
     int index;
-    temp_rel = malloc(sizeof(struct relation));
-    temp_rel->tuples = malloc(sizeof(struct tuple)*middle[position].rows_size);
-    temp_rel->num_tuples = middle[position].rows_size;
-    for(int i=0; i<middle[position].rows_size; i++)
+    //temp_rel = malloc(sizeof(struct relation));
+    //temp_rel->tuples = malloc(sizeof(struct tuple)*middle[position].rows_size);
+    //temp_rel->num_tuples = middle[position].rows_size;
+    int tempRowCounter = 0;
+    int **temp_rows_id;
+    int data = 0, position_of_temp=0;
+    int i;
+	int participants = middle[position].numb_of_parts;
+
+    temp_rows_id = malloc(sizeof(int *)*participants);
+    for(int i=0; i<participants; i++)
+    {
+      temp_rows_id[i] = malloc(sizeof(int)*(middle[position].rows_size));
+    }
+    if (mode == BIGGER)
+    {
+    	for (int i = 0; i < middle[position].rows_size; ++i)
+    	{
+    		index = middle[position].rows_id[relation_position][i];
+    		if (table[relation].my_relation[column].tuples[index].payload > value)
+    		{
+    			for (int k = 0; k < participants; ++k)
+    			{
+    				temp_rows_id[k][tempRowCounter] = middle[position].rows_id[k][i];
+    			}
+    			tempRowCounter++;
+    		}
+    	}
+    }
+    else if (mode == LESS){
+    	for (int i = 0; i < middle[position].rows_size; ++i)
+    	{
+    		index = middle[position].rows_id[relation_position][i];
+    		if (table[relation].my_relation[column].tuples[index].payload < value)
+    		{
+    			for (int k = 0; k < participants; ++k)
+    			{
+    				temp_rows_id[k][tempRowCounter] = middle[position].rows_id[k][i];
+    			}
+    			tempRowCounter++;
+    		}
+    	}
+    }
+    else if (mode == EQUAL){
+    	for (int i = 0; i < middle[position].rows_size; ++i)
+    	{
+    		index = middle[position].rows_id[relation_position][i];
+    		if (table[relation].my_relation[column].tuples[index].payload == value)
+    		{
+    			for (int k = 0; k < participants; ++k)
+    			{
+    				temp_rows_id[k][tempRowCounter] = middle[position].rows_id[k][i];
+    			}
+    			tempRowCounter++;
+    		}
+    	}
+    }else{
+    	printf("WRONG COMPARING MODE CODE IN FILTER PREDICATE\n");
+    	//return NULL;
+    }
+    /*for(int i=0; i<middle[position].rows_size; i++)
     {
       index = middle[position].rows_id[relation_position][i];
       temp_rel->tuples[i].key = index;
       temp_rel->tuples[i].payload = table[relation].my_relation[column].tuples[index].payload;
 
-    }
+
+    }*/
     /*printf("TIPWNW TON IDI ENDIAMSO\n");
     for(int i=0; i<middle[position].rows_size; i++)
     {
       printf("%d %d\n", temp_rel->tuples[i].key, temp_rel->tuples[i].payload);
     }*/
     /*printf("SE AFTA THA KANW %d %d\n", mode, value);*/
-    filter_result = filterPredicate(temp_rel, value, mode);
+    /*filter_result = filterPredicate(temp_rel, value, mode);
+    printf("TA RESULTS %d ENW I ARXIKI %d\n",filter_result->numRows, middle[position].rows_size);*/
     /*printf("TIPWNW TO APOTELESMA TOU FILTER2\n");
     for (int i = 0; i < filter_result->numRows; ++i)
     {
     	printf("%d\n", filter_result->rowIDsR[i]);
     }*/
-    int tempRowCounter = 0;
+    /*int tempRowCounter = 0;
     int **temp_rows_id;
     int data = 0, position_of_temp=0;
     int i;
@@ -1260,8 +1342,8 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     for(int i=0; i<participants; i++)
     {
       temp_rows_id[i] = malloc(sizeof(int)*(middle[position].rows_size));
-    }
-    for (int i = 0; i < filter_result->numRows; ++i)
+    }*/
+    /*for (int i = 0; i < filter_result->numRows; ++i)
     {
     	for (int j = 0; j < middle[position].rows_size; ++j)
     	{
@@ -1272,9 +1354,28 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     				temp_rows_id[k][tempRowCounter] = middle[position].rows_id[k][j];
     			}
     			tempRowCounter++;
+    			if (tempRowCounter > middle[position].rows_size)
+    			{
+    				exit(-1);
+    			}
     		}
     	}
-    }
+    }*/
+    /*for (int i = 0; i < middle[position].rows_size; ++i)
+    {
+    	for (int j = 0; j < filter_result->numRows; ++j)
+    	{
+    		if (middle[position].rows_id[relation_position][i] == filter_result->rowIDsR[j])
+    		{
+    			for (int k = 0; k < participants; ++k)
+    			{
+    				temp_rows_id[k][tempRowCounter] = middle[position].rows_id[k][i];
+    			}
+    			tempRowCounter++;
+    			break;
+    		}
+    	}
+    }*/
     if (tempRowCounter)
     {
     	for (int i = 0; i < participants; ++i)
@@ -1285,7 +1386,14 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     			exit(-1);
     		}
     	}
-    }
+    }else{
+		for(int i=0; i<participants; i++)
+		{
+		  free(temp_rows_id[i]);
+		}
+		free(temp_rows_id);
+		temp_rows_id = NULL;
+	}
 		/*for(i=0; i<middle[position].rows_size; i++)
 			{
 				if(middle[position].rows_id[position][i] == filter_result->rowIDsR[position_of_temp])
