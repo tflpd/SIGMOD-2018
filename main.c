@@ -377,7 +377,7 @@ int main(int argc, char **argv){
 			// Free the queries information of that batch
 			/*for (int i = 0; i < my_batch; ++i)
 			{
-				
+
 			}*/
 
 			printf("Executed %d queries.\n", numQueries);

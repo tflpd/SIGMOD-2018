@@ -1211,7 +1211,7 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
     			perror("Memory reallocation failed: ");
     			exit(-1);
     		}
-    	}	
+    	}
     }
 		/*for(i=0; i<middle[position].rows_size; i++)
 			{
@@ -1243,15 +1243,15 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
 }
 
 void executeBatch(struct batch *my_batch,struct table *relations_table){
+
+  int *predicates_array;
+
 	for (int i = 0; i < my_batch->numQueries; ++i)
 	{
 		// ISWS NA TO STELNOUME ME &MIDDLE
 		struct middle_table *middle;
 		middle = create_middle_table(my_batch->queries[i].size2);
-		for (int j = 0; j < my_batch->queries[i].size2; ++j)
-		{
-			string_parser(my_batch->queries[i], middle, relations_table, j);
-		}
+		predicates_array = string_parser(my_batch->queries[i], middle, relations_table, my_batch->queries[i].size2);
 		struct middle_table mergedMiddle;
 		for(int j=0; j < my_batch->queries[i].size2; j++)
 		{
