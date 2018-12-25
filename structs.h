@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 struct tuple {
   int32_t key;
@@ -50,6 +51,7 @@ struct result{
 
 struct column{
   int table;
+  int virtualRelation;
   int column;
 };
 
@@ -109,11 +111,11 @@ void print_welcome_msg(int);
 
 struct middle_table * create_middle_table(int );
 int find_relation(int relation, int *, int);
-void insert_to_middle(struct middle_table *, struct table *, int, int, int, int, int);
-void insert_to_middle_predicate(struct middle_table *, struct table *, int, int, int, int, int);
+void insert_to_middle(struct middle_table *middle, struct table *table, int size, struct column r1, struct column r2);
+void insert_to_middle_predicate(struct middle_table * middle, struct table * table, int size, struct column r, int value, int mode);
 /*-----*/
 
-struct query* create_query(int* table_indeces, int size, char** filters, int size_1, int** sum, int size_2);
+struct query create_query(int* table_indeces, int size, char** filters, int size_1, int** sum, int size_2);
 struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS);
 struct result *scanRelations(struct relation *relationR, struct relation *relationS);
 struct result *filterPredicate(struct relation *relationR, int comparingValue, int comparingMode);
@@ -121,4 +123,9 @@ int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** project
 void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery);
 void executeBatch(struct batch *my_batch,struct table *relations_table);
 void printQuery(struct query myQuery);
+void freeQuery(struct query myQuery);
+void freeBatch(struct batch *myBatch);
+void freeResult(struct result *myResult);
+void freeRelation(struct relation *myRelation);
+void freeMiddle(struct middle_table *myMiddle);
 #endif

@@ -122,6 +122,7 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
                     switch (index) {
                     case 0:
                         c1.table = currQuery.table_indeces[x];
+                        c1.virtualRelation = x;
                     case 1:
                         c1.column = x;
                     case 2:
@@ -135,11 +136,12 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
             //printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
             if ((test_operator = strchr(my_operator, '.')) != NULL) {
                 c2.table = currQuery.table_indeces[comparison_value];
+                c2.virtualRelation = comparison_value;
                 type_of_predicate[global_index] = JOIN;
-                insert_to_middle(middle, relations_table, middlesSize, c1.table, c2.table, c1.column, c2.column);
+                insert_to_middle(middle, relations_table, middlesSize, c1, c2);
             } else {
                 type_of_predicate[global_index] = EQUAL;
-                insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, comparison_value, EQUAL);
+                insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, EQUAL);
             }
         } else if ((my_operator = strchr(currQuery.filters[global_index], ch2)) != NULL) {
             //printf("%s",my_operator);
@@ -150,6 +152,7 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
                     switch (index) {
                     case 0:
                         c1.table = currQuery.table_indeces[x];
+                        c1.virtualRelation = x;
                     case 1:
                         c1.column = x;
                     case 2:
@@ -159,7 +162,7 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
                 index++;
             }
             type_of_predicate[global_index] = LESS;
-            insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, comparison_value, LESS);
+            insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, LESS);
             //printf("table 1| %d %d ",c1.table,c1.column);
         } else if ((my_operator = strchr(currQuery.filters[global_index], ch3)) != NULL) {
             int comparison_value;
@@ -172,6 +175,7 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
                     switch (index) {
                     case 0:
                         c1.table = currQuery.table_indeces[x];
+                        c1.virtualRelation = x;
                     case 1:
                         c1.column = x;
                     case 2:
@@ -181,7 +185,7 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
                 index++;
             }
             type_of_predicate[global_index] = BIGGER;
-            insert_to_middle_predicate(middle, relations_table, middlesSize, c1.table, c1.column, comparison_value, BIGGER);
+            insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, BIGGER);
             //printf("table 1| %d %d %d",c1.table,c1.column, temp);
         } else
             printf("fail");

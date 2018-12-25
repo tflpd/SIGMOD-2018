@@ -27,7 +27,7 @@ int main(int argc, char **argv){
 			size_t qsize = 0;
 			FILE *fin = NULL;
 			if(getline(&queriesFileName,&qsize,stdin) != -1){
-				printf("File to be executed:%s\n", queriesFileName);
+				printf("File to be executed:%s", queriesFileName);
 				fin = fopen(strtok(queriesFileName,"\n"),"r");
 				if (fin == NULL)
 				{
@@ -60,8 +60,13 @@ int main(int argc, char **argv){
 
 				// The user wants to stop providing us with queries
 				if(strncmp(query,"F",strlen("F")) == 0){
-					printf("We're done with accepting queries.\n");
-					break;
+					executeBatch(my_batch, relations_table);
+					freeBatch(my_batch);
+					//printf("This is the end of this batch.\n");
+					sleep(1);
+					my_batch = malloc(sizeof(struct batch));
+					my_batch->queries = NULL;
+					my_batch->numQueries = 0;
 				}else{
 
 					/* We must split the given query into its three parts.
@@ -340,8 +345,8 @@ int main(int argc, char **argv){
 					// }
 
 					// Merge the information into query struct
-					struct query* my_query;
-					my_query = create_query(table_indeces, size, filters, size_1, sum, size_2);
+					//struct query* my_query;
+					//my_query = create_query(table_indeces, size, filters, size_1, sum, size_2);
 					//printQuery(*my_query);
 					// Add that struct into the current batch
 					my_batch->numQueries++;
@@ -350,7 +355,7 @@ int main(int argc, char **argv){
 						perror("Memory reallocation failed: ");
 						return -1;
 					}
-					my_batch->queries[my_batch->numQueries - 1] = *my_query;
+					my_batch->queries[my_batch->numQueries - 1] = create_query(table_indeces, size, filters, size_1, sum, size_2);
 
 
 					// Freeing every piece of memory that we allocated.
@@ -371,8 +376,8 @@ int main(int argc, char **argv){
 					numQueries++;
 				}
 			}
-			/* EDW STELNW BATCH GIA EKTELESI*/
-			executeBatch(my_batch, relations_table);
+
+			free(my_batch);
 
 			// Free the queries information of that batch
 			/*for (int i = 0; i < my_batch; ++i)
@@ -380,7 +385,7 @@ int main(int argc, char **argv){
 
 			}*/
 
-			printf("Executed %d queries.\n", numQueries);
+			//printf("Executed %d queries.\n", numQueries);
 			fclose(fin);
 			free(query);
 			free(queriesFileName);
@@ -398,6 +403,8 @@ int main(int argc, char **argv){
 			print_welcome_msg(0);
 		}
 	}
+
+	free(input);
 
 
 
