@@ -7,11 +7,14 @@ int main(int argc, char **argv){
 	   to get input from the user. */
 	char *input = NULL; // The input that the user provides
 	size_t n = 0;
+	int lines;
 	struct table *relations_table;
 
 
 	/* EDW PERNEIS DATA */
 	relations_table = create_table_new("small.init");
+	//need lines for free
+	lines = count_lines("small.init");
 
 	print_welcome_msg(1);
 
@@ -376,7 +379,7 @@ int main(int argc, char **argv){
 					numQueries++;
 				}
 			}
-
+			
 			free(my_batch);
 
 			// Free the queries information of that batch
@@ -405,6 +408,7 @@ int main(int argc, char **argv){
 	}
 
 	free(input);
+	free_table_new(relations_table, lines);
 
 
 
