@@ -710,8 +710,17 @@ void middle_merge(struct middle_table *table1, struct middle_table *table2){
   for(int i = 0; i < second_rows*first_rows; i++){
     temp_rows_id[i] = malloc(sizeof(int)*total_participants);
   }
+  //NOTE: might seg
   memcpy(merged_parts, table1->participants, sizeof(int)*table1->numb_of_parts);
-  memcpy(merged_parts + sizeof(int)*table1->numb_of_parts, table2->participants, sizeof(int)*table2->numb_of_parts);
+  memcpy(merged_parts + table1->numb_of_parts, table2->participants, sizeof(int)*table2->numb_of_parts);
+
+  for(int i = 0; i < first_rows; i++){
+  	for(int j = 0; j < second_rows; j++){
+  		memcpy(temp_rows_id[index], table1->rows_id[i], sizeof(int)*participants1);
+  		memcpy(temp_rows_id[index] + first_rows, table2->rows_id[j], sizeof(int)*participants2);
+  		index++;
+  	}
+  }
 
   for(int i = 0; i < first_rows; i++){
     free(table1->rows_id[i]);
