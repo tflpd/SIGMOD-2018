@@ -485,6 +485,18 @@ void freeMiddle(struct middle_table *myMiddle){
 	free(myMiddle->rows_id);
 }
 
+void freeMiddleTable(struct middle_table *middle, int size){
+  for(int i = 0; i < size; i++){
+    if(middle[i].numb_of_parts > 0){
+      free(middle[i].participants);
+      for(int j = 0; j < middle[i].rows_size; j++){
+        free(middle[i].rows_id[j]);
+      }
+      free(middle[i].rows_id);
+    }
+  }
+  free(middle);
+}
 
 /*************************************/
 /*** Functions that release memory ***/
@@ -683,6 +695,39 @@ int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** project
 	return projectionsIndeces;
 }
 
+void middle_merge(struct middle_table *table1, struct middle_table *table2){
+  int total_participants = table1->numb_of_parts + table2->numb_of_parts;
+  int first_rows = table1->rows_size;
+  int second_rows = table2->rows_size;
+  //int ids_per_row = first_rows* second_rows;
+  int participants1 = table2->numb_of_parts;
+  int participants2 = table2->numb_of_parts;
+  int index = 0;
+  int *merged_parts;
+  int **temp_rows_id;
+  merged_parts = malloc(sizeof(int)*total_participants);
+  temp_rows_id = malloc(sizeof(int*)*(second_rows*first_rows));
+  for(int i = 0; i < second_rows*first_rows; i++){
+    temp_rows_id[i] = malloc(sizeof(int)*total_participants);
+  }
+  memcpy(merged_parts, table1->participants, sizeof(int)*table1->numb_of_parts);
+  memcpy(merged_parts + sizeof(int)*table1->numb_of_parts, table2->participants, sizeof(int)*table2->numb_of_parts);
+
+  for(int i = 0; i < first_rows; i++){
+    free(table1->rows_id[i]);
+  }
+  free(table1->rows_id);
+  for(int i = 0; i < second_rows; i++){
+    free(table2->rows_id[i]);
+  }
+  free(table2->rows_id);
+  free(table2->participants);
+  free(table1->participants);
+  table1->participants = merged_parts;
+  table1->numb_of_parts = total_participants;
+  table1->rows_id = temp_rows_id;
+}
+
 // Function that actually takes the last merged middle table and prints the payloads of the rows
 // that are present and the final result. Noteworthy that only the columns mentioned in the projections
 // will be printed and not all that are present in the final mergedMiddle
@@ -824,7 +869,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		struct relation *temp_rel;
 		middle[position2].numb_of_parts++;
 		int index;
-		int *temp;			
+		int *temp;
 		int participants = middle[position2].numb_of_parts;
 		temp = malloc(sizeof(int)*middle[position2].numb_of_parts);
 		memcpy(temp, middle[position2].participants, sizeof(int)*(participants-1));
@@ -859,7 +904,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 	    	}
 	    	temp_rows_id[participants - 1][i] = join_result->rowIDsR[i];
 	    }
-		
+
 		for(int i=0; i<participants-1; i++)
 		{
 		  free(middle[position2].rows_id[i]);
@@ -875,7 +920,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		//printf("MPIKA STO DEN IPIRXE TO DEFTERO\n");
 		middle[position1].numb_of_parts++;
 		int *temp;
-		struct relation *temp_rel;			
+		struct relation *temp_rel;
 		int index;
 		struct result* join_result;
 		int participants = middle[position1].numb_of_parts;
@@ -1015,7 +1060,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		join_result = RadixHashJoin(temp_rel1, temp_rel2);
 		freeRelation(temp_rel1);
 		freeRelation(temp_rel2);
-		
+
 		int **temp_rows_id;
 		int numParticipants1 = middle[position1].numb_of_parts;
 		int numParticipants2 = middle[position2].numb_of_parts;
@@ -1044,7 +1089,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 				temp_rows_id[j][i] = middle[position2].rows_id[j - numParticipants1][join_result->rowIDsS[i]];
 			}
 		}
-		
+
 		for(int i=0; i<numParticipants1; i++)
 		{
 			free(middle[position1].rows_id[i]);
@@ -1056,6 +1101,12 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		}
 		free(middle[position2].rows_id);
 		/* EDW PREPEI NA KANEIS NULL TIN POSITION2 TOU MIDDLE TABLE WSTE MELLONTIKA NA FENETE ADEIA*/
+    middle[position2].rows_id = NULL;
+    middle[position2].numb_of_parts = 0;
+    middle[position2].rows_size = 0;
+    free(middle[position2].participants);
+    middle[position2].participants = NULL;
+    ///////////////////////////////////////////
 		middle[position1].rows_id = temp_rows_id;
 		middle[position1].rows_size = join_result->numRows;
 		middle[position1].numb_of_parts = numParticipants;
@@ -1224,6 +1275,8 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 		// NOTE TO SELF NA PROSTHESW MERGERER LATER
 		printQueryAndCheckSumResult(&middle[mergedPosition], relations_table, my_batch->queries[i]);
 		freeMiddle(&middle[mergedPosition]);
+    free(predicates_array);
+    //freeMiddleTable(middle, my_batch->queries[i].size2);
 	}
 }
 

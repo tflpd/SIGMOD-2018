@@ -113,6 +113,8 @@ struct middle_table * create_middle_table(int );
 int find_relation(int relation, int *, int);
 void insert_to_middle(struct middle_table *middle, struct table *table, int size, struct column r1, struct column r2);
 void insert_to_middle_predicate(struct middle_table * middle, struct table * table, int size, struct column r, int value, int mode);
+void freeMiddleTable(struct middle_table *, int);
+void middle_merge(struct middle_table *, struct middle_table *);
 /*-----*/
 
 struct query create_query(int* table_indeces, int size, char** filters, int size_1, int** sum, int size_2);
