@@ -700,8 +700,9 @@ void middle_merge(struct middle_table *table1, struct middle_table *table2){
   int first_rows = table1->rows_size;
   int second_rows = table2->rows_size;
   //int ids_per_row = first_rows* second_rows;
-  int participants1 = table2->numb_of_parts;
+  int participants1 = table1->numb_of_parts;
   int participants2 = table2->numb_of_parts;
+  // printf("parts are %d %d", )
   int index = 0;
   int *merged_parts;
   int **temp_rows_id;
@@ -717,7 +718,7 @@ void middle_merge(struct middle_table *table1, struct middle_table *table2){
   for(int i = 0; i < first_rows; i++){
   	for(int j = 0; j < second_rows; j++){
   		memcpy(temp_rows_id[index], table1->rows_id[i], sizeof(int)*participants1);
-  		memcpy(temp_rows_id[index] + first_rows, table2->rows_id[j], sizeof(int)*participants2);
+  		memcpy(temp_rows_id[index] + participants1, table2->rows_id[j], sizeof(int)*participants2);
   		index++;
   	}
   }
@@ -1080,7 +1081,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			perror("Memory reallocation failed: ");
 			exit(-1);
 		}
-		memcpy(middle[position1].participants + sizeof(int)*numParticipants1, middle[position2].participants, sizeof(int)*numParticipants2);
+		memcpy(middle[position1].participants + numParticipants1, middle[position2].participants, sizeof(int)*numParticipants2);
 
 	    temp_rows_id = malloc(sizeof(int *)*numParticipants);
 		for(int i=0; i<numParticipants; i++)
@@ -1264,12 +1265,30 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
 void executeBatch(struct batch *my_batch,struct table *relations_table){
 
   int *predicates_array;
+  int flag = 0;
+  //printf("queries are %d\n",my_batch->numQueries);
 
 	for (int i = 0; i < my_batch->numQueries; ++i)
 	{
 		struct middle_table *middle;
+		int flag = 0;
+		int first_middle;
+		int middle_size = my_batch->queries[i].size2;
 		middle = create_middle_table(my_batch->queries[i].size2);
+		//printf("MIDDLE SIZE IS %d\n", my_batch->queries[i].size2);
 		predicates_array = string_parser(my_batch->queries[i], middle, relations_table, my_batch->queries[i].size2);
+		// for(int index = 0; index < middle_size; i++){
+		// 	if(middle[index].numb_of_parts > 0){
+		// 		printf("num part is %d", middle[index].numb_of_parts);
+		// 		if(flag == 0){
+		// 			first_middle = index;
+		// 			flag = 1;
+		// 		}
+		// 		else{
+		// 			middle_merge(&middle[first_middle], &middle[index]);
+		// 		}
+		// 	}
+		// }
 		int mergedPosition = -1;
 		for(int j=0; j < my_batch->queries[i].size2; j++)
 		{
@@ -1284,7 +1303,7 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 		// NOTE TO SELF NA PROSTHESW MERGERER LATER
 		printQueryAndCheckSumResult(&middle[mergedPosition], relations_table, my_batch->queries[i]);
 		freeMiddle(&middle[mergedPosition]);
-    free(predicates_array);
+    	free(predicates_array);
     //freeMiddleTable(middle, my_batch->queries[i].size2);
 	}
 }
