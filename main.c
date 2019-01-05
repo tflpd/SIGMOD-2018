@@ -1,5 +1,6 @@
 #include "structs.h"
 #include "storage.h"
+#include "statistics.h"
 
 int main(int argc, char **argv){
 
@@ -9,12 +10,16 @@ int main(int argc, char **argv){
 	size_t n = 0;
 	int lines;
 	struct table *relations_table;
+	struct statisticsRelation *sRelation;
 
 
 	/* EDW PERNEIS DATA */
 	relations_table = create_table_new("small.init");
 	//need lines for free
 	lines = count_lines("small.init");
+
+	//Initializing the table that we ll use to measure our statistics
+	sRelation = createStatisticsRelations(relations_table, lines);
 
 	print_welcome_msg(1);
 

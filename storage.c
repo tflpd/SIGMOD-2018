@@ -7,6 +7,12 @@ struct relation * store_data(char * my_file) {
     //int32_t j;
     struct tuple * t;
     struct relation * r;
+    int32_t tmpMin = -1;
+    int32_t tmpMax = -1;
+    int32_t range = 0;
+
+    int32_t numDiscreteData = 0;
+
     fp = fopen(my_file, "r");
 
     fread( & n_tuples, sizeof(u_int64_t), 1, fp);
@@ -18,12 +24,58 @@ struct relation * store_data(char * my_file) {
     for (int i = 0; i < relations; i++) {
         r[i].tuples = malloc(sizeof(struct tuple) * n_tuples);
         r[i].num_tuples = n_tuples;
+        r[i].statistics = malloc(sizeof(struct statistic));
+        r[i].statistics->numData = n_tuples;
         for (int j = 0; j < n_tuples; j++) {
             fread( & pload, sizeof(u_int64_t), 1, fp);
+            if (!j)
+            {
+            	tmpMin = pload;
+            	tmpMax = pload;
+            }
+
+            if (pload < tmpMin)
+            {
+            	tmpMin = pload;
+            }
+            if (pload > tmpMax)
+            {
+            	tmpMax = pload;
+            }
             //printf("\n\t%d\n",pload);
             r[i].tuples[j].key = j;
             r[i].tuples[j].payload = pload;
         }
+        r[i].statistics->min = tmpMin;
+        r[i].statistics->max = tmpMax;
+        range = tmpMax - tmpMin + 1;
+        char *boolDiscreteTable;
+        if (range > N)
+        {
+        	range = N;
+        	boolDiscreteTable = calloc(range, sizeof(char));
+        	for (int j = 0; j < n_tuples; ++j)
+        	{
+        		if (!boolDiscreteTable[(r[i].tuples[j].payload - r[i].statistics->min) % N])
+        		{
+        			boolDiscreteTable[(r[i].tuples[j].payload - r[i].statistics->min) % N] = 1;
+        			numDiscreteData++;	
+        		}
+        	}
+
+        }else{
+        	boolDiscreteTable = calloc(range, sizeof(char));
+        	for (int j = 0; j < n_tuples; ++j)
+        	{
+        		if (!boolDiscreteTable[r[i].tuples[j].payload - r[i].statistics->min])
+        		{
+        			boolDiscreteTable[r[i].tuples[j].payload - r[i].statistics->min] = 1;
+        			numDiscreteData++;	
+        		}
+        	}
+        }
+        r[i].statistics->numDiscreteData = numDiscreteData;
+        free(boolDiscreteTable);
     }
     fclose(fp);
     return r;
