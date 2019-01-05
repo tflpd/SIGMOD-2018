@@ -18,6 +18,10 @@ struct statisticsRelation *createStatisticsRelations(struct table *myTable, int 
 int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int targetValue, struct table myTable){
 	char flag = 0;
 	int prevNumData = sRelation->columnsStatistics[targetColID].numData;
+	if (prevNumData == 0)
+	{
+		return 0;
+	}
 	sRelation->columnsStatistics[targetColID].min = targetValue;
 	sRelation->columnsStatistics[targetColID].max = targetValue;
 	for (int i = 0; i < myTable.tuples; ++i)
@@ -26,6 +30,10 @@ int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int t
 		{
 			if (sRelation->columnsStatistics[targetColID].numDiscreteData)
 			{
+				if (sRelation->columnsStatistics[targetColID].numDiscreteData == 0)
+				{
+					return 0;
+				}
 				sRelation->columnsStatistics[targetColID].numData = sRelation->columnsStatistics[targetColID].numData / sRelation->columnsStatistics[targetColID].numDiscreteData;	
 			}else{
 				sRelation->columnsStatistics[targetColID].numData = 0;
@@ -46,6 +54,10 @@ int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int t
 		if (i != targetColID)
 		{
 			double x = 1 - sRelation->columnsStatistics[targetColID].numData / prevNumData;
+			if (sRelation->columnsStatistics[i].numDiscreteData == 0)
+			{
+				return 0;
+			}
 			double x2 = pow(x, sRelation->columnsStatistics[i].numData / sRelation->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
 			sRelation->columnsStatistics[i].numDiscreteData *= x;
@@ -58,6 +70,10 @@ int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int t
 int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, int targetValue, int operationType){
 	int k1, k2;
 	int prevNumData = sRelation->columnsStatistics[targetColID].numData;
+	if (prevNumData == 0)
+	{
+		return 0;
+	}
 
 	if (operationType == LESS)
 	{
@@ -78,7 +94,10 @@ int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, in
 		k1 = sRelation->columnsStatistics[targetColID].min;
 	}
 
-	
+	if ((sRelation->columnsStatistics[targetColID].max - sRelation->columnsStatistics[targetColID].min) == 0)
+	{
+		return 0;
+	}
 	sRelation->columnsStatistics[targetColID].numDiscreteData *= (k2 - k1) / (sRelation->columnsStatistics[targetColID].max - sRelation->columnsStatistics[targetColID].min);
 	sRelation->columnsStatistics[targetColID].numData *= (k2 - k1) / (sRelation->columnsStatistics[targetColID].max - sRelation->columnsStatistics[targetColID].min);
 	sRelation->columnsStatistics[targetColID].min = k1;
@@ -89,6 +108,10 @@ int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, in
 		if (i != targetColID)
 		{
 			double x = 1 - sRelation->columnsStatistics[targetColID].numData / prevNumData;
+			if (sRelation->columnsStatistics[i].numDiscreteData == )
+			{
+				return 0;
+			}
 			double x2 = pow(x, sRelation->columnsStatistics[i].numData / sRelation->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
 			sRelation->columnsStatistics[i].numDiscreteData *= x;
@@ -100,6 +123,10 @@ int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, in
 
 int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetColIDA, int targetColIDB){
 	int prevNumData = sRelation->columnsStatistics[targetColIDA].numData;
+	if (prevNumData == 0)
+	{
+		return 0;
+	}
 	if (sRelation->columnsStatistics[targetColIDA].min > sRelation->columnsStatistics[targetColIDB].min)
 	{
 		sRelation->columnsStatistics[targetColIDB].min = sRelation->columnsStatistics[targetColIDA].min;
@@ -117,7 +144,6 @@ int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetC
 	int n = sRelation->columnsStatistics[targetColIDA].max - sRelation->columnsStatistics[targetColIDA].min + 1;
 	sRelation->columnsStatistics[targetColIDA].numData /= n;
 	sRelation->columnsStatistics[targetColIDB].numData = sRelation->columnsStatistics[targetColIDA].numData;
-	/*EPISIS NA KOITAKSW TIS DIERESEIS ME 0*/
 
 	double x = 1 - sRelation->columnsStatistics[targetColIDA].numData / prevNumData;
 	double x2 = pow(x, prevNumData / sRelation->columnsStatistics[targetColIDA].numDiscreteData);
@@ -131,6 +157,10 @@ int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetC
 		if ((i != targetColIDA) && (i != targetColIDB))
 		{
 			double x = 1 - sRelation->columnsStatistics[targetColIDA].numData / prevNumData;
+			if (sRelation->columnsStatistics[i].numDiscreteData)
+			{
+				return 0;
+			}
 			double x2 = pow(x, sRelation->columnsStatistics[i].numData / sRelation->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
 			sRelation->columnsStatistics[i].numDiscreteData *= x;
@@ -157,9 +187,21 @@ int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelat
 
 	int n = sRelationA->columnsStatistics[targetColIDA].max - sRelationA->columnsStatistics[targetColIDA].min + 1;
 	int newNumData = (sRelationA->columnsStatistics[targetColIDA].numData * sRelationB->columnsStatistics[targetColIDB].numData) / n;
+	if (prevNumData == 0)
+	{
+		return 0;
+	}
 	int newNumDiscrData = (sRelationA->columnsStatistics[targetColIDA].numDiscreteData * sRelationB->columnsStatistics[targetColIDB].numDiscreteData) / n;
 	int prevNumDiscrDataA = sRelationA->columnsStatistics[targetColIDA].numDiscreteData;
+	if (prevNumDiscrDataA == 0)
+	{
+		return 0;
+	}
 	int prevNumDiscrDataB = sRelationB->columnsStatistics[targetColIDB].numDiscreteData;
+	if (prevNumDiscrDataB == 0)
+	{
+		return 0;
+	}
 
 	sRelationA->columnsStatistics[targetColIDA].numData = newNumData;
 	sRelationB->columnsStatistics[targetColIDB].numData = newNumData;
@@ -172,6 +214,10 @@ int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelat
 		if (i != targetColIDA)
 		{
 			double x = 1 - sRelationA->columnsStatistics[targetColIDA].numDiscreteData / prevNumDiscrDataA;
+			if (sRelationA->columnsStatistics[i].numDiscreteData == 0)
+			{
+				return 0;
+			}
 			double x2 = pow(x, sRelationA->columnsStatistics[i].numData / sRelationA->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
 			sRelationA->columnsStatistics[i].numDiscreteData *= x;
@@ -184,6 +230,10 @@ int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelat
 		if (i != targetColIDB)
 		{
 			double x = 1 - sRelationB->columnsStatistics[targetColIDB].numDiscreteData / prevNumDiscrDataB;
+			if (sRelationB->columnsStatistics[i].numDiscreteData == 0)
+			{
+				return 0;
+			}
 			double x2 = pow(x, sRelationB->columnsStatistics[i].numData / sRelationB->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
 			sRelationB->columnsStatistics[i].numDiscreteData *= x;
