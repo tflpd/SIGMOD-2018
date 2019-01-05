@@ -699,10 +699,8 @@ void middle_merge(struct middle_table *table1, struct middle_table *table2){
   int total_participants = table1->numb_of_parts + table2->numb_of_parts;
   int first_rows = table1->rows_size;
   int second_rows = table2->rows_size;
-  //int ids_per_row = first_rows* second_rows;
   int participants1 = table1->numb_of_parts;
   int participants2 = table2->numb_of_parts;
-  // printf("parts are %d %d", )
   int index = 0;
   int *merged_parts;
   int **temp_rows_id;
@@ -1275,20 +1273,18 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 		int first_middle;
 		int middle_size = my_batch->queries[i].size2;
 		middle = create_middle_table(my_batch->queries[i].size2);
-		//printf("MIDDLE SIZE IS %d\n", my_batch->queries[i].size2);
 		predicates_array = string_parser(my_batch->queries[i], middle, relations_table, my_batch->queries[i].size2);
-		// for(int index = 0; index < middle_size; i++){
-		// 	if(middle[index].numb_of_parts > 0){
-		// 		printf("num part is %d", middle[index].numb_of_parts);
-		// 		if(flag == 0){
-		// 			first_middle = index;
-		// 			flag = 1;
-		// 		}
-		// 		else{
-		// 			middle_merge(&middle[first_middle], &middle[index]);
-		// 		}
-		// 	}
-		// }
+		for(int index = 0; index < middle_size; index++){
+			if(middle[index].numb_of_parts > 0){
+				if(flag == 0){
+					first_middle = index;
+					flag = 1;
+				}
+				else{
+					middle_merge(&middle[first_middle], &middle[index]);
+				}
+			}
+		}
 		int mergedPosition = -1;
 		for(int j=0; j < my_batch->queries[i].size2; j++)
 		{
