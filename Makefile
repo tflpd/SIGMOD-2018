@@ -1,6 +1,6 @@
-OBJS = main.o functions.o myList.o storage.o
-SOURCE = main.c functions.c myList.c storage.c
-HEADER = structs.h myList.h	storage.h
+OBJS = main.o functions.o myList.o storage.o statistics.o
+SOURCE = main.c functions.c myList.c storage.c statistics.c
+HEADER = structs.h myList.h	storage.h statistics.h
 OUT = project
 CC = gcc
 FLAGS = -g -c
@@ -19,6 +19,9 @@ myList.o: myList.c
 
 storage.o: storage.c
 	$(CC) $(FLAGS) storage.c -lm
+
+statistics.o: statistics.c
+	$(CC) $(FLAGS) statistics.c -lm
 
 clean:
 	rm -rf $(OBJS) $(OUT)

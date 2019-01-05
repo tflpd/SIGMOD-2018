@@ -7,8 +7,9 @@
 #define LESS 1 // values used in filterPredicate function to determine the comparing mode
 #define EQUAL 2 // values used in filterPredicate function to determine the comparing mode
 #define JOIN 3 //values used in filterPredicate function to determine the comparing mode
-#define R 1
-#define S 2
+#define R 1 //relation R will be alaways the first
+#define S 2 //relation S alaways the second
+#define N 50000000 //N is the maximum range kept in the statistics above which we start hashing discrete values
 
 #include <time.h>
 #include <math.h>
@@ -16,6 +17,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "statistics.h"
+
+struct statistic;
 
 struct tuple {
   int32_t key;
@@ -25,6 +29,7 @@ struct tuple {
 struct relation{
   struct tuple *tuples; // Pointer to the first tuple
   int32_t num_tuples;   // Total number of tuples in the table
+  struct statistic *statistics;
 } relation;
 
 struct index_array{
