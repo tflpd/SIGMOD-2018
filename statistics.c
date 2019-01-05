@@ -55,7 +55,7 @@ int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int t
 	return 1;
 }
 
-int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, int targetValue, int operationType, struct table myTable){
+int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, int targetValue, int operationType){
 	int k1, k2;
 	int prevNumData = sRelation->columnsStatistics[targetColID].numData;
 
@@ -98,7 +98,7 @@ int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, in
 	return 1;
 }
 
-int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetColIDA, int targetColIDB, struct table myTable){
+int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetColIDA, int targetColIDB){
 	int prevNumData = sRelation->columnsStatistics[targetColIDA].numData;
 	if (sRelation->columnsStatistics[targetColIDA].min > sRelation->columnsStatistics[targetColIDB].min)
 	{
@@ -137,6 +137,72 @@ int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetC
 			sRelation->columnsStatistics[i].numData = sRelation->columnsStatistics[targetColIDA].numData;
 		}
 	}
-
+	return 1;
 }
 
+int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelation *sRelationB, int targetColIDA, int targetColIDB){
+	if (sRelationA->columnsStatistics[targetColIDA].min > sRelationB->columnsStatistics[targetColIDB].min)
+	{
+		sRelationB->columnsStatistics[targetColIDB].min = sRelationA->columnsStatistics[targetColIDA].min;
+	}else{
+		sRelationA->columnsStatistics[targetColIDA].min = sRelationB->columnsStatistics[targetColIDB].min;
+	}
+
+	if (sRelationA->columnsStatistics[targetColIDA].max < sRelationB->columnsStatistics[targetColIDB].max)
+	{
+		sRelationB->columnsStatistics[targetColIDB].max = sRelationA->columnsStatistics[targetColIDA].max;
+	}else{
+		sRelationA->columnsStatistics[targetColIDA].max = sRelationB->columnsStatistics[targetColIDB].max;
+	}
+
+	int n = sRelationA->columnsStatistics[targetColIDA].max - sRelationA->columnsStatistics[targetColIDA].min + 1;
+	int newNumData = (sRelationA->columnsStatistics[targetColIDA].numData * sRelationB->columnsStatistics[targetColIDB].numData) / n;
+	int newNumDiscrData = (sRelationA->columnsStatistics[targetColIDA].numDiscreteData * sRelationB->columnsStatistics[targetColIDB].numDiscreteData) / n;
+	int prevNumDiscrDataA = sRelationA->columnsStatistics[targetColIDA].numDiscreteData;
+	int prevNumDiscrDataB = sRelationB->columnsStatistics[targetColIDB].numDiscreteData;
+
+	sRelationA->columnsStatistics[targetColIDA].numData = newNumData;
+	sRelationB->columnsStatistics[targetColIDB].numData = newNumData;
+
+	sRelationA->columnsStatistics[targetColIDA].numDiscreteData = newNumDiscrData;
+	sRelationB->columnsStatistics[targetColIDB].numDiscreteData = newNumDiscrData;
+
+	for (int i = 0; i < sRelationA->numColumns; ++i)
+	{
+		if (i != targetColIDA)
+		{
+			double x = 1 - sRelationA->columnsStatistics[targetColIDA].numDiscreteData / prevNumDiscrDataA;
+			double x2 = pow(x, sRelationA->columnsStatistics[i].numData / sRelationA->columnsStatistics[i].numDiscreteData);
+			x = 1 - x2;
+			sRelationA->columnsStatistics[i].numDiscreteData *= x;
+			sRelationA->columnsStatistics[i].numData = sRelationA->columnsStatistics[targetColIDA].numData;
+		}
+	}
+
+	for (int i = 0; i < sRelationB->numColumns; ++i)
+	{
+		if (i != targetColIDB)
+		{
+			double x = 1 - sRelationB->columnsStatistics[targetColIDB].numDiscreteData / prevNumDiscrDataB;
+			double x2 = pow(x, sRelationB->columnsStatistics[i].numData / sRelationB->columnsStatistics[i].numDiscreteData);
+			x = 1 - x2;
+			sRelationB->columnsStatistics[i].numDiscreteData *= x;
+			sRelationB->columnsStatistics[i].numData = sRelationA->columnsStatistics[targetColIDA].numData;
+		}
+	}
+	return 1;
+}
+
+int statisticsInnerJoin(struct statisticsRelation *sRelation, int targetColID){
+	int n = sRelation->columnsStatistics[targetColID].max - sRelation->columnsStatistics[targetColID].min + 1;
+	sRelation->columnsStatistics[targetColID].numData = sRelation->columnsStatistics[targetColID].numData * sRelation->columnsStatistics[targetColID].numData / n;
+
+	for (int i = 0; i < sRelation->numColumns; ++i)
+	{
+		if (i != targetColID)
+		{
+			sRelation->columnsStatistics[i].numData = sRelation->columnsStatistics[targetColID].numData;
+		}
+	}
+	return 1;
+}
