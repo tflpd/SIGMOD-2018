@@ -21,5 +21,7 @@ struct statisticsRelation
 
 struct statisticsRelation *createStatisticsRelations(struct table *myTable, int numRelations);
 int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int targetValue, struct table myTable);
+int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, int targetValue, int operationType, struct table myTable);
+int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetColIDA, int targetColIDB, struct table myTable);
 
 #endif
