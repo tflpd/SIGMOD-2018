@@ -1,4 +1,5 @@
 #include "threadpool.h"
+#include <pthread.h>
 
 
 threadpool *create_threadpool(int num_of_threads, int queue_size){
@@ -36,18 +37,20 @@ threadpool *create_threadpool(int num_of_threads, int queue_size){
    	my_threadpool->thread_counter++;
    	my_threadpool->started++;
    	}
+   	printf("created");
    	return my_threadpool;
 }
 
 int add_task(threadpool *my_threadpool, void (*function)(void *), void *argument, int flags){
 	
+	printf("mphka");
 	if(pthread_mutex_lock(&(my_threadpool->locker)) !=0){
 		return THREADPOOL_LOCK_FAIL;
 	}
 
 	int next = (my_threadpool->tail + 1) % my_threadpool->queue_size;
 	
-	while(1){
+	do{
 		
 		if(my_threadpool->pending_tasks == my_threadpool->queue_size){
 			return THREADPOOL_QUEUE_FULL;
@@ -66,7 +69,7 @@ int add_task(threadpool *my_threadpool, void (*function)(void *), void *argument
 			return THREADPOOL_LOCK_FAIL;
 		}
 
-	}
+	}while(0);
 
 	if(pthread_mutex_unlock(&(my_threadpool->locker)) != 0){
 		return THREADPOOL_LOCK_FAIL;
@@ -77,7 +80,7 @@ int add_task(threadpool *my_threadpool, void (*function)(void *), void *argument
 
 int destroy_threadpool(threadpool *my_threadpool, int flags){
 
-	while(0){
+	do{
 
 		if(my_threadpool->shutdown){
 			return THREADPOOL_SHUTDOWN;
@@ -98,7 +101,7 @@ int destroy_threadpool(threadpool *my_threadpool, int flags){
 				return THREADPOOL_ERROR;
 			}
 		}
-	}
+	}while(0);
 
 	free_threadpool(my_threadpool);
 	return 0;
@@ -139,7 +142,7 @@ void *thread_worker(void *pool){
 		my_threadpool->pending_tasks--;
 
 		pthread_mutex_unlock(&(my_threadpool->locker));
-
+		printf("im here\n");
 		(*(task.function))(task.argument);
 	}
 
