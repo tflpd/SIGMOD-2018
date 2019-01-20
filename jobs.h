@@ -35,10 +35,10 @@ typedef struct PartitionJobArgs{
 	int *hist;
 	int *psumR;
 	int *psumS;
-	int startR;
-	int endR;
-	int startS;
-	int endS;
+	int startR;//  start and end variables indicate the part of the relation each thread is responsible for
+	int endR;// start is the index we begin e.g. relationR->tuples[startR] and end variable is where we finish
+	int startS;//
+	int endS;//
 }PartitionArgs;
 
 typedef struct JoinJobArgs{
