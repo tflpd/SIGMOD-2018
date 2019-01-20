@@ -65,9 +65,8 @@ JobScheduler *Scheduler_Init(int thread_count, int queue_size, int flags)
     pthread_mutex_init(&(scheduler->waiter), NULL);
     pthread_cond_init(&(scheduler->waiter_cond), NULL);
     pthread_cond_init(&(scheduler->signal), NULL);
-    /* Initialize mutex and conditional variable first */
 
-    /* Start worker threads */
+    // Create threads
     for(int i = 0; i < thread_count; i++) {
         if(pthread_create(&(scheduler->threads[i]), NULL, worker_thread, (void*)scheduler) != 0) {
             perror("Error in initializing threads\n");
@@ -97,26 +96,25 @@ int add_new_job(JobScheduler *scheduler, void (*function)(void *), void *argumen
     next = (scheduler->tail + 1) % scheduler->queue_size;
 
     do {
-        /* Are we full ? */
+        //check if full
         if(scheduler->count == scheduler->queue_size) {
             err = THREADPOOL_FULL_QUEUE;
             break;
         }
 
-        /* Are we shutting down ? */
+        //check is we shut down
         if(scheduler->shutdown) {
             err = THREADPOOL_SHUTDOWN;
             break;
         }
 
-        /* Add task to queue */
+        //add a new job to the queue
         scheduler->queue[scheduler->tail].function = function;
         scheduler->queue[scheduler->tail].argument = argument;
         scheduler->tail = next;
         scheduler->count += 1;
         scheduler->amount_of_jobs++;
 
-        /* pthread_cond_broadcast */
         if(pthread_cond_signal(&(scheduler->signal)) != 0) {
             err = THREADPOOL_LOCK_ERROR;
             break;
@@ -143,7 +141,7 @@ int destroy_scheduler(JobScheduler *scheduler, int flags)
     }
 
     do {
-        /* Already shutting down */
+        //check for shutdown
         if(scheduler->shutdown) {
             err = THREADPOOL_SHUTDOWN;
             break;
@@ -152,14 +150,14 @@ int destroy_scheduler(JobScheduler *scheduler, int flags)
         scheduler->shutdown = (flags & GRACEFULL) ?
             GRACEFULL_SHUTDOWN : IMMEDIATE_SHUTDOWN;
 
-        /* Wake up all worker threads */
+        //wake up the  threads
         if((pthread_cond_broadcast(&(scheduler->signal)) != 0) ||
            (pthread_mutex_unlock(&(scheduler->lock_mutex)) != 0)) {
             err = THREADPOOL_LOCK_ERROR;
             break;
         }
 
-        /* Join all worker thread */
+        //join the threads
         for(i = 0; i < scheduler->thread_count; i++) {
             if(pthread_join(scheduler->threads[i], NULL) != 0) {
                 err = THREADPOOL_THREAD_ERROR;
@@ -167,7 +165,7 @@ int destroy_scheduler(JobScheduler *scheduler, int flags)
         }
     } while(0);
 
-    /* Only if everything went well do we deallocate the scheduler */
+    //if nothing went wrong here we deallocate the scheduler
     if(!err) {
         free_scheduler(scheduler);
     }
@@ -180,14 +178,12 @@ int free_scheduler(JobScheduler *scheduler)
         return -1;
     }
 
-    /* Did we manage to allocate ? */
+    //make sure we destroyed the threads
     if(scheduler->threads) {
         free(scheduler->threads);
         free(scheduler->queue);
 
-        /* Because we allocate scheduler->threads after initializing the
-           mutex and condition variable, we're sure they're
-           initialized. Let's lock_mutex the mutex just in case. */
+
         pthread_mutex_lock(&(scheduler->lock_mutex));
         pthread_mutex_destroy(&(scheduler->lock_mutex));
         pthread_cond_destroy(&(scheduler->signal));
@@ -203,11 +199,10 @@ static void *worker_thread(void *threadpool)
     Job task;
 
     for(;;) {
-        /* lock_mutex must be taken to wait on conditional variable */
+        //lock mutex
         pthread_mutex_lock(&(scheduler->lock_mutex));
 
-        /* Wait on condition variable, check for spurious wakeups.
-           When returning from pthread_cond_wait(), we own the lock_mutex. */
+        //wait for condition variable so we can own the mutex
         while((scheduler->count == 0) && (!scheduler->shutdown)) {
             pthread_cond_wait(&(scheduler->signal), &(scheduler->lock_mutex));
         }
@@ -218,16 +213,16 @@ static void *worker_thread(void *threadpool)
             break;
         }
 
-        /* Grab our task */
+        //take a job from the queue
         task.function = scheduler->queue[scheduler->head].function;
         task.argument = scheduler->queue[scheduler->head].argument;
         scheduler->head = (scheduler->head + 1) % scheduler->queue_size;
         scheduler->count -= 1;
 
-        /* Unlock */
+
         pthread_mutex_unlock(&(scheduler->lock_mutex));
 
-        /* Get to work */
+        //execute the job
         (*(task.function))(task.argument);
     }
     scheduler->started--;
