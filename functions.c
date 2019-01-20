@@ -1,7 +1,9 @@
 #include "structs.h"
 #include "myList.h"
 #include "storage.h"
-#include "threadpool.h"
+#include "jobscheduler.h"
+#include "jobs.h"
+#define NUMTHREAD 8
 
 /*---------------------------- FIRST PART RE WRITTEN ----------------------------*/
 
@@ -19,6 +21,336 @@ int is_prime(int num){
      }
 
      return 1;
+}
+struct result *RadixHashJoinParallel (struct relation *relationR, struct relation *relationS)
+{
+
+  JobScheduler *Scheduler = Scheduler_Init (NUMTHREAD, NUMTHREAD + 1, 0);
+  HistJobArgs *h_args;
+  int **histsR, **histsS;
+  histsR = malloc (sizeof (int *) * NUMTHREAD);
+  histsS = malloc (sizeof (int *) * NUMTHREAD);
+  for (int i = 0; i < NUMTHREAD; i++)
+    {
+      histsR[i] = calloc (NUMBUCKETS, sizeof (int));
+      histsS[i] = calloc (NUMBUCKETS, sizeof (int));
+    }
+  int *psumR = calloc (NUMBUCKETS, sizeof (int));
+  int *psumS = calloc (NUMBUCKETS, sizeof (int));
+  int *psumRR = calloc (NUMBUCKETS, sizeof (int));
+  int *psumSS = calloc (NUMBUCKETS, sizeof (int));
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////First part///////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////
+  h_args = malloc (sizeof (HistJobArgs) * NUMTHREAD);
+  int tuplesR = relationR->num_tuples;
+  int tuplesS = relationS->num_tuples;
+  int parted_r = tuplesR / NUMTHREAD;
+  int parted_s = tuplesS / NUMTHREAD;
+  int endr, ends;
+  endr = parted_r;
+  ends = parted_s;
+
+  for (int i = 0; i < NUMTHREAD; i++)
+    {
+      h_args[i].relationR = relationR;
+      h_args[i].relationS = relationS;
+      h_args[i].startS = i * parted_s;
+      h_args[i].startR = i * parted_r;
+      h_args[i].endR = endr;
+      h_args[i].endS = ends;
+      h_args[i].HistR = histsR[i];
+      h_args[i].HistS = histsS[i];
+      if (i == NUMTHREAD - 1)
+	{
+	  int lastR = tuplesR;
+	  int lastS = tuplesS;
+	  h_args[i].endR = lastR;
+	  h_args[i].endS = lastS;
+	}
+
+      endr += parted_r;
+      ends += parted_s;
+    }
+
+
+
+  for (int i = 0; i < NUMTHREAD; i++)
+    {
+
+      add_new_job (Scheduler, &HistogramJob, (void *) &h_args[i]);
+    }
+  wait_all_tasks (Scheduler, 1);
+  int *totalHistR, *totalHistS;
+  totalHistR = calloc (NUMBUCKETS, sizeof (int));
+  totalHistS = calloc (NUMBUCKETS, sizeof (int));
+  for (int i = 0; i < NUMBUCKETS; i++)
+    {
+      for (int j = 0; j < NUMTHREAD; j++)
+	{
+	  totalHistR[i] += histsR[j][i];
+	  totalHistS[i] += histsS[j][i];
+	}
+    }
+
+
+  //here free the arguments
+  destroy_scheduler (Scheduler, 1);
+  for (int i = 0; i < NUMTHREAD; i++)
+    {
+      free (histsS[i]);
+      free (histsR[i]);
+    }
+  free (h_args);
+  free (histsS);
+  free (histsR);
+  ///////////////////////////////////////////////////////////////////////////
+  //////////////////////////Second part//////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////
+  Scheduler = Scheduler_Init (NUMTHREAD, NUMTHREAD + 1, 0);
+  PartitionArgs *p_args = malloc (sizeof (PartitionArgs) * NUMTHREAD);
+  struct relation *reorderedR = malloc (sizeof (struct relation));
+  struct relation *reorderedS = malloc (sizeof (struct relation));
+
+  reorderedR->tuples = malloc (sizeof (struct tuple) * tuplesR);
+  reorderedS->tuples = malloc (sizeof (struct tuple) * tuplesS);
+  int last = 0;
+  for (int i = 0; i < NUMBUCKETS; ++i)
+    {
+      if (totalHistR[i] != 0)
+	{
+	  psumR[i] = last;
+	  psumRR[i] = last;
+	  last += totalHistR[i];
+	}
+    }
+  last = 0;
+  for (int i = 0; i < NUMBUCKETS; ++i)
+    {
+      if (totalHistS[i] != 0)
+	{
+	  psumS[i] = last;
+	  psumSS[i] = last;
+	  last += totalHistS[i];
+	}
+    }
+  tuplesR = relationR->num_tuples;
+  tuplesS = relationS->num_tuples;
+  parted_r = tuplesR / NUMTHREAD;
+  parted_s = tuplesS / NUMTHREAD;
+  endr = parted_r;
+  ends = parted_s;
+  for (int i = 0; i < NUMTHREAD; i++)
+    {
+      p_args[i].relR = relationR;
+      p_args[i].relS = relationS;
+      p_args[i].reordered_R = reorderedR;
+      p_args[i].reordered_S = reorderedS;
+      p_args[i].startS = i * parted_s;
+      p_args[i].startR = i * parted_r;
+      p_args[i].endR = endr;
+      p_args[i].endS = ends;
+      p_args[i].psumR = psumR;
+      p_args[i].psumS = psumS;
+      if (i == NUMTHREAD - 1)
+	{
+	  int lastR = tuplesR;
+	  int lastS = tuplesS;
+	  p_args[i].endR = lastR;
+	  p_args[i].endS = lastS;
+	}
+      endr += parted_r;
+      ends += parted_s;
+    }
+  for (int i = 0; i < NUMTHREAD; i++)
+    {
+      add_new_job (Scheduler, &PartitionJob, (void *) &p_args[i]);
+    }
+
+  wait_all_tasks (Scheduler, 1);
+  destroy_scheduler (Scheduler, 1);
+  free (p_args);
+  ///////////////////////////////////////////////////////////////////////////
+  ////////////////////////////Third part/////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////
+  Scheduler = Scheduler_Init (NUMBUCKETS, NUMBUCKETS + 1, 0);
+  struct bucketIndex *index;
+  index = malloc (sizeof (struct bucketIndex) * NUMBUCKETS);
+  for (int i = 0; i < NUMBUCKETS; ++i)
+    {
+      index[i].minTuples = 0;
+    }
+  for (int i = 0; i < NUMBUCKETS; ++i)
+    {
+      // If it is a bucket with values fot both relations
+      if ((totalHistR[i] != 0) && (totalHistS[i] != 0))
+	{
+	  // If R is the relation with the least tuples
+	  if (totalHistR[i] <= totalHistS[i])
+	    {
+	      index[i].minTuples = R;
+	      index[i].numTuples = totalHistR[i];
+	    }
+	  else
+	    {
+	      index[i].minTuples = S;
+	      index[i].numTuples = totalHistS[i];
+	    }
+
+	  // Find the first prime after the size of the bucket to be used as size for the bucket array
+	  int x = index[i].numTuples;
+	  while (is_prime (x) == 0)
+	    x++;
+	  index[i].bucketSize = x;
+
+	  // Allocate and initialize the bucket array
+	  index[i].bucket = malloc (sizeof (int) * x);
+	  for (int j = 0; j < x; ++j)
+	    {
+	      index[i].bucket[j] = -1;
+	    }
+
+	  // Allocate and initialize the chain array
+	  index[i].chain = malloc (sizeof (int) * index[i].numTuples);	//ISWS +1 EDW?
+	  for (int j = 0; j < index[i].numTuples; ++j)
+	    {
+	      index[i].chain[j] = -1;
+	    }
+
+	  // If relation R will have the index of that bucket
+	  if (index[i].minTuples == R)
+	    {
+	      // For every tuple of that bucket
+	      for (int j = psumRR[i]; j < psumRR[i] + totalHistR[i]; ++j)
+		{
+		  // Find its hash
+		  int hashValue = reorderedR->tuples[j].payload % x;
+		  int prevChainIndex = index[i].bucket[hashValue];
+		  // If it is the first tuple to hash on that cell of bucket array
+		  if (prevChainIndex == -1)
+		    {
+		      //printf("AXNE\n");
+		      int virtualPosition = j - psumRR[i];
+		      index[i].bucket[hashValue] = virtualPosition;
+		      index[i].chain[virtualPosition] = -2;
+		    }
+		  else
+		    {
+		      int virtualPosition = j - psumRR[i];
+		      //printf("MPIKA %d\n", virtualPosition);
+		      index[i].chain[virtualPosition] = prevChainIndex;
+		      index[i].bucket[hashValue] = virtualPosition;
+		      //printf("Sto index %d thesi %d timi %d\n", i, hashValue, virtualPosition);
+		    }
+
+		}
+	    }
+	  else			// Else relation S will have the index for that bucket
+	    {
+	      //printf("EDW OXI\n");
+	      // For every tuple of that bucket
+	      for (int j = psumSS[i]; j < psumSS[i] + totalHistS[i]; ++j)
+		{
+		  // Find its hash
+		  int hashValue = reorderedS->tuples[j].payload % x;
+		  int prevChainIndex = index[i].bucket[hashValue];
+		  // If it is the first tuple to hash on that cell of bucket array
+		  if (prevChainIndex == -1)
+		    {
+		      int virtualPosition = j - psumSS[i];
+		      index[i].bucket[hashValue] = virtualPosition;
+		      index[i].chain[virtualPosition] = -2;
+		    }
+		  else
+		    {
+		      int virtualPosition = j - psumSS[i];
+		      index[i].chain[virtualPosition] = prevChainIndex;
+		      index[i].bucket[hashValue] = virtualPosition;
+		    }
+
+		}
+	    }
+	}
+    }
+  struct result *results;
+  results = malloc (sizeof (struct result) * NUMBUCKETS);
+  JoinArgs *j_args;
+  j_args = malloc (sizeof (JoinArgs) * NUMBUCKETS);
+
+  for (int i = 0; i < NUMBUCKETS; i++)
+    {
+      j_args[i].bucket_index = i;
+      j_args[i].index = index;
+      j_args[i].psumR = psumRR;
+      j_args[i].psumS = psumSS;
+      j_args[i].histR = totalHistR;
+      j_args[i].histS = totalHistS;
+      j_args[i].reordered_R = reorderedR;
+      j_args[i].reordered_S = reorderedS;
+      //j_args[i].new_list = &list[i];
+      j_args[i].join_result = &results[i];
+    }
+  for (int i = 0; i < NUMBUCKETS; i++)
+    {
+      add_new_job (Scheduler, &JoinJob, (void *) &j_args[i]);
+    }
+  ////////////////////////////////////////////////////////////////////////
+  //wait_all_tasks(Scheduler,1);
+  destroy_scheduler (Scheduler, 1);
+  int total_rows = 0;
+  struct result *final_result = malloc (sizeof (struct result));
+  for (int i = 0; i < NUMBUCKETS; i++)
+    {
+      total_rows += results[i].numRows;
+    }
+  final_result->rowIDsR = malloc (sizeof (int) * total_rows);
+  final_result->rowIDsS = malloc (sizeof (int) * total_rows);
+  final_result->numRows = total_rows;
+  int final_index = 0;
+  for (int i = 0; i < NUMBUCKETS; i++)
+    {
+      for (int j = 0; j < results[i].numRows; j++)
+	{
+	  final_result->rowIDsR[final_index] = results[i].rowIDsR[j];
+	  final_result->rowIDsS[final_index] = results[i].rowIDsS[j];
+	  final_index++;
+	}
+    }
+
+  free (psumR);
+  free (psumS);
+  free (psumRR);
+  free (psumSS);
+// for(int i = 0; i < NUMBUCKETS; i++){
+//   if(results[i].rowIDsR != NULL){
+//
+//     free(results[i].rowIDsR);
+//   }
+//   if(results[i].rowIDsS != NULL){
+//
+//     free(results[i].rowIDsS);
+//   }
+// }
+  free (results);
+  free (reorderedR->tuples);
+  free (reorderedS->tuples);
+// for (int i = 0; i < NUMBUCKETS; ++i)
+// {
+//   if (index[i].minTuples != 0)
+//   {
+//     free(index[i].bucket);
+//     free(index[i].chain);
+//   }
+// }
+// for(int i=0; i<NUMBUCKETS; i++){
+//   if(results[i].numRows > 0){
+//     free(results[i].rowIDsS);
+//     free(results[i].rowIDsR);
+//   }
+// }
+  free (index);
+  free (j_args);
+  return final_result;
 }
 
 struct result* RadixHashJoin(struct relation *relationR, struct relation *relationS){

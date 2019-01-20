@@ -1,50 +1,64 @@
 #include "jobs.h"
+#include <pthread.h>
+#define NUMS 128
+
+pthread_mutex_t global = PTHREAD_MUTEX_INITIALIZER;
+
 
 void HistogramJob(void *arguments){
+	HistJobArgs *args = (HistJobArgs*)arguments;
 
-	HistJobArgs *args = arguments;
-
-	args->HistR->arrayHist = calloc(NUMBUCKETS, sizeof(int));
-	args->HistS->arrayHist = calloc(NUMBUCKETS, sizeof(int));
 	int hashed_value;
-	printf("startR %d endR %d\n",args->startR, args->endR);
+	//printf("startR %d endR %d\n",args->startR, args->endR);
 	for(int i = args->startR; i < args->endR; i++){
 
 		hashed_value = args->relationR->tuples[i].payload % NUMBUCKETS;
-		args->HistR->arrayHist[hashed_value]++;
+		//printf("%d haha\n", args->relationR->num_tuples);
+		args->HistR[hashed_value]++;
 	}
 
 	for(int i = args->startS; i < args->endS; i++){
 		hashed_value = args->relationS->tuples[i].payload % NUMBUCKETS;
-		args->HistS->arrayHist[hashed_value]++;
+		args->HistS[hashed_value]++;
 	}
 
 }
-///////////////////////////////////////////////////////////////////////////////////
 
-void *PartitionJob(void *arguments){
+void PartitionJob(void *arguments){
 
-	PartitionArgs *args = arguments;
+	PartitionArgs *args = (PartitionArgs*) arguments;
+    //pthread_mutex_init(&global,NULL);
+  pthread_mutex_lock(&global);
 	int hashed_value;
-
-	for(int i = args->start; i < args->end; i++){
+	// printf("startR %d endR %d\n",args->startR, args->endR);
+	for(int i = args->startR; i < args->endR; i++){
 
 		hashed_value = args->relR->tuples[i].payload % NUMBUCKETS;
-		args->reordered_R->tuples[args->psum[hashed_value]] = args->relR->tuples[i];
-		args->psum[hashed_value]++;
+		args->reordered_R->tuples[args->psumR[hashed_value]].key = args->relR->tuples[i].key;
+		args->reordered_R->tuples[args->psumR[hashed_value]].payload = args->relR->tuples[i].payload;
+
+		args->psumR[hashed_value]++;
 	}
+	for(int i = args->startS; i < args->endS; i++){
+
+		hashed_value = args->relS->tuples[i].payload % NUMBUCKETS;
+		args->reordered_S->tuples[args->psumS[hashed_value]] = args->relS->tuples[i];
+		args->psumS[hashed_value]++;
+	}
+	pthread_mutex_unlock(&global);
+    //pthread_mutex_destroy(&global);
 }
 ////////////////////////////////////////////////////////////////////////////////////
-void *JoinJob(void *arguments){
+void JoinJob(void *arguments){
 
 	///////////////////ARGUMENTS//////////////////////////////////////////////////////
 	struct 	JoinJobArgs *args = arguments;
 	int bucket = args->bucket_index;
 	struct relation *rel_R = args->reordered_R;
 	struct relation *rel_S = args->reordered_S;
-	struct my_list *list = args->new_list;
+	struct my_list *list = list_init(NUMS);
 	//////////////////////////////////////////////////////////////////////////////////
-	int results_counter;
+	int results_counter=0;
 	if(args->index[bucket].minTuples == R){
 
 		for(int j = args->psumS[bucket]; j < args->psumS[bucket] + args->histS[bucket]; j++ ){
@@ -57,9 +71,9 @@ void *JoinJob(void *arguments){
 			}
 			else{
 
-				int actualPositionInR = args->psumR[bucket] + possible_position; 
+				int actualPositionInR = args->psumR[bucket] + possible_position;
 
-				if(rel_S->tuples[j].payload = rel_R->tuples[actualPositionInR].payload){
+				if(rel_S->tuples[j].payload == rel_R->tuples[actualPositionInR].payload){
 					list = add_to_buff(list, rel_R->tuples[actualPositionInR].key, rel_S->tuples[j].key);
 					results_counter++;
 				}
@@ -69,7 +83,7 @@ void *JoinJob(void *arguments){
 				while(possible_position != -2){
 					actualPositionInR = args->psumR[bucket] + possible_position;
 
-					if(rel_S->tuples[j].payload = rel_R->tuples[actualPositionInR].payload){
+					if(rel_S->tuples[j].payload == rel_R->tuples[actualPositionInR].payload){
 
 						list = add_to_buff(list, rel_R->tuples[actualPositionInR].key, rel_S->tuples[j].key);
 						results_counter++;
@@ -114,8 +128,44 @@ void *JoinJob(void *arguments){
 		}
 	}
 
-	//struct result *join_result;
-	//result =  malloc(sizeof())
+	struct result *join_result = args->join_result;
+	//printf("results counter is %d\n",results_counter);
+	if(results_counter > 0){
+		join_result->rowIDsR = malloc(sizeof(int)*results_counter);
+		join_result->rowIDsS = malloc(sizeof(int)*results_counter);
+		join_result->numRows = results_counter;
+		struct lnode *tmp;
+		tmp = list->head;
+		int resultsIterCounter;
+		resultsIterCounter = 0;
+
+		if (tmp != NULL)
+		{
+			while(tmp->key < list->current->key){
+				for (int i = 0; i < tmp->counter; ++i)
+				{
+					join_result->rowIDsR[resultsIterCounter] = tmp->buffer[i].keyR;
+					join_result->rowIDsS[resultsIterCounter] = tmp->buffer[i].keyS;
+					resultsIterCounter++;
+				}
+				tmp = tmp->next;
+			}
+			for (int i = 0; i < tmp->counter; ++i)
+			{
+				join_result->rowIDsR[resultsIterCounter] = tmp->buffer[i].keyR;
+				join_result->rowIDsS[resultsIterCounter] = tmp->buffer[i].keyS;
+				resultsIterCounter++;
+			}
+		}
+
+	}
+	else{
+		join_result->numRows = 0;
+	}
+
+
+	delete_list(list);
+
 
 }
 
@@ -123,16 +173,3 @@ void *JoinJob(void *arguments){
 //////////////////////////////////////////////////////////////////////////////////
 ///////////These are helper functions not to be executed by threads///////////////
 //////////////////////////////////////////////////////////////////////////////////
-
-int *join_partitioned_hists(PartitionedHist *Hist, int size){
-
-	int *totalHist;
-	totalHist = calloc(NUMBUCKETS, sizeof(int));
-	for(int i = 0; i < NUMBUCKETS; i++){
-		for(int j = 0; j < size; j++){
-			totalHist[i] += Hist[j].arrayHist[i];
-		}
-	}
-
-	return totalHist;
-}

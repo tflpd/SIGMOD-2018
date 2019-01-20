@@ -2,34 +2,43 @@
 #define JOBS_H
 
 #include "structs.h"
-#include "threadpool.h"
+#include "jobscheduler.h"
 #include "myList.h"
+
+typedef struct PartitionedHist{
+  int *arrayHist;
+  int size;
+}PartitionedHist;
 
 /////////////////////////////////////////
 //////////////Jobs Arguments/////////////
 ////////////////////////////////////////
 typedef struct HistogramJobArgs{
-	
+
 	struct relation *relationR;
-	struct relation *relationS; 
-	PartitionedHist *HistR;
-	PartitionedHist *HistS;
+	struct relation *relationS;
+	int *HistR;
+	int *HistS;
 	int startR;
 	int endR;
 	int startS;
 	int endS;
-	
+
 }HistJobArgs;
 
 typedef struct PartitionJobArgs{
 
 	struct relation *relR;
 	struct relation *reordered_R;
+	struct relation *relS;
+	struct relation *reordered_S;
 	int *hist;
-	int *psum;
-	int *copy_psum;
-	int start;
-	int end;
+	int *psumR;
+	int *psumS;
+	int startR;
+	int endR;
+	int startS;
+	int endS;
 }PartitionArgs;
 
 typedef struct JoinJobArgs{
@@ -43,20 +52,21 @@ typedef struct JoinJobArgs{
 	struct relation *reordered_R;
 	struct relation *reordered_S;
 	struct my_list *new_list;
+	struct result *join_result;
 }JoinArgs;
+
 ///////////////////////////////////////////////////////////////////////
 /////////////////////////Job definitions//////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
 
 void HistogramJob(void *);
-void *PartitionJob(void *);
-void *JoinJob(void *);
+void PartitionJob(void *);
+void JoinJob(void *);
 
 //////////////////////////////////////////////////////////////////////////////////
 ///////////These are helper functions not to be executed by threads///////////////
 //////////////////////////////////////////////////////////////////////////////////
 
-int *join_partitioned_hists(PartitionedHist *, int);
 
 #endif
