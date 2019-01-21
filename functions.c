@@ -1196,7 +1196,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			middle[first_empty].participants[1] = r2.virtualRelation;
 			middle[first_empty].numb_of_parts = 2;
 
-			join_result = RadixHashJoin(&table[r1.table].my_relation[r1.column],&table[r2.table].my_relation[r2.column]);
+			join_result = RadixHashJoinParallel(&table[r1.table].my_relation[r1.column],&table[r2.table].my_relation[r2.column]);
 			middle[first_empty].rows_id = malloc(sizeof(int *)*2);
 			middle[first_empty].rows_id[0] = malloc(sizeof(int)*join_result->numRows);
 			middle[first_empty].rows_id[1] = malloc(sizeof(int)*join_result->numRows);
@@ -1232,7 +1232,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			temp_rel->tuples[i].payload = table[r2.table].my_relation[r2.column].tuples[index].payload;
 
 		}
-		join_result = RadixHashJoin(&table[r1.table].my_relation[r1.column], temp_rel);
+		join_result = RadixHashJoinParallel(&table[r1.table].my_relation[r1.column], temp_rel);
 		freeRelation(temp_rel);
 		int tempRowCounter = 0;
 		int **temp_rows_id;
@@ -1287,7 +1287,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			temp_rel->tuples[i].payload = table[r1.table].my_relation[r1.column].tuples[index].payload;
 
 		}
-		join_result = RadixHashJoin(temp_rel, &table[r2.table].my_relation[r2.column]);
+		join_result = RadixHashJoinParallel(temp_rel, &table[r2.table].my_relation[r2.column]);
 		freeRelation(temp_rel);
 		int **temp_rows_id;
 		temp_rows_id = malloc(sizeof(int *)*participants);
@@ -1405,7 +1405,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 			temp_rel2->tuples[i].payload = table[r2.table].my_relation[r2.column].tuples[index].payload;
 
 		}
-		join_result = RadixHashJoin(temp_rel1, temp_rel2);
+		join_result = RadixHashJoinParallel(temp_rel1, temp_rel2);
 		freeRelation(temp_rel1);
 		freeRelation(temp_rel2);
 
@@ -1754,6 +1754,13 @@ void executeBatch(struct batch *my_batch,struct table *relations_table, struct s
 			free(tempStatsRelArray[i].columnsStatistics);
 		}
 		free(tempStatsRelArray);*/
+		for (int j = 0; j < numJoins*2; ++j)
+		{
+			free(columnsToBeJoinedArray[j]);
+			free(reorderedColumnsToBeJoinedArray[j]);
+		}
+		free(columnsToBeJoinedArray);
+		free(reorderedColumnsToBeJoinedArray);
 		/*for (int j = 0; j < my_batch->queries[i].size2; ++j)
 		{
 			if (predicatesArray[j].predicateType == 3)

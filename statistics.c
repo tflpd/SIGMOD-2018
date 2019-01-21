@@ -377,6 +377,7 @@ void reorderColumns(struct column **columnsToBeJoinedArray, struct column **reor
 				minCostIndex = j;
 			}
 		}
+		free(costsArray);
 
 		tempArrayCounter = 0;
 		for (int j = 0; j < numColumns; ++j)

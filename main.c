@@ -398,6 +398,7 @@ int main(int argc, char **argv){
 			printf("Queries execution time: %f seconds\n", (double)(end - batchBegin) / CLOCKS_PER_SEC);
 			
 			free(my_batch);
+			freeStatistiscsRelations(sRelation);
 
 			// Free the queries information of that batch
 			/*for (int i = 0; i < my_batch; ++i)
