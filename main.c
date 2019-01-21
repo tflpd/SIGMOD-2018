@@ -14,12 +14,19 @@ int main(int argc, char **argv){
 
 
 	/* EDW PERNEIS DATA */
+	clock_t begin = clock();
 	relations_table = create_table_new("small.init");
+	clock_t end = clock();
+	printf("Data loading time: %f seconds\n", (double)(end - begin) / CLOCKS_PER_SEC);
 	//need lines for free
 	lines = count_lines("small.init");
 
 	//Initializing the table that we ll use to measure our statistics
+	clock_t statisticsBegin = clock();
 	sRelation = createStatisticsRelations(relations_table, lines);
+	//printf("TO NUM DATA EKEI EINAI %d\n", sRelation[5].columnsStatistics[3].numData);
+	end = clock();
+	printf("Statistics loading time: %f seconds\n", (double)(end - statisticsBegin) / CLOCKS_PER_SEC);
 
 	print_welcome_msg(1);
 
@@ -64,11 +71,13 @@ int main(int argc, char **argv){
 			my_batch->queries = NULL;
 			my_batch->numQueries = 0;
 
+			clock_t batchBegin = clock();
+
 			while(getline(&query,&n1,fin) != -1){
 
 				// The user wants to stop providing us with queries
 				if(strncmp(query,"F",strlen("F")) == 0){
-					executeBatch(my_batch, relations_table);
+					executeBatch(my_batch, relations_table, sRelation);
 					freeBatch(my_batch);
 					//printf("This is the end of this batch.\n");
 					sleep(1);
@@ -384,6 +393,9 @@ int main(int argc, char **argv){
 					numQueries++;
 				}
 			}
+
+			end = clock();
+			printf("Queries execution time: %f seconds\n", (double)(end - batchBegin) / CLOCKS_PER_SEC);
 			
 			free(my_batch);
 
@@ -397,6 +409,7 @@ int main(int argc, char **argv){
 			fclose(fin);
 			free(query);
 			free(queriesFileName);
+			printf("Total execution time: %f seconds\n", (double)(end) - begin / CLOCKS_PER_SEC);
 			print_welcome_msg(0);
 		}
 

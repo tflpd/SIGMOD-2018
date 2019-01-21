@@ -699,13 +699,18 @@ void middle_merge(struct middle_table *table1, struct middle_table *table2){
   int total_participants = table1->numb_of_parts + table2->numb_of_parts;
   int first_rows = table1->rows_size;
   int second_rows = table2->rows_size;
+  printf("FIRST ROWS %d 2ND ROWS %d\n", first_rows, second_rows);
   int participants1 = table1->numb_of_parts;
+  printf("1\n");
   int participants2 = table2->numb_of_parts;
+  printf("2\n");
   int index = 0;
   int *merged_parts;
   int **temp_rows_id;
   merged_parts = malloc(sizeof(int)*total_participants);
+  printf("3\n");
   temp_rows_id = malloc(sizeof(int*)*(second_rows*first_rows));
+  printf("OI TOTAL PARTIC %d\n", total_participants);
   for(int i = 0; i < second_rows*first_rows; i++){
     temp_rows_id[i] = malloc(sizeof(int)*total_participants);
   }
@@ -1041,7 +1046,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 	but they are in different cells of middle table*/
 	else if(position1 != position2)
 	{
-		printf("MPIKA STO IPIRXAN KAI TA DIO SE ALLO KELI\n");
+		//printf("MPIKA STO IPIRXAN KAI TA DIO SE ALLO KELI\n");
 		int *temp1, *temp2;
 		struct relation *temp_rel1, *temp_rel2;
 		int index;
@@ -1049,6 +1054,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		// No need to add/merge anything to the middle.participants table because the relations are already in
 		temp_rel1 = malloc(sizeof(struct relation));
 		temp_rel1->tuples = malloc(sizeof(struct tuple)*middle[position1].rows_size);
+		temp_rel1->num_tuples = middle[position1].rows_size;
 		for(int i=0; i<middle[position1].rows_size; i++)
 		{
 			index = middle[position1].rows_id[relation_position1][i];
@@ -1058,6 +1064,7 @@ void insert_to_middle(struct middle_table *middle, struct table *table, int size
 		}
 		temp_rel2 = malloc(sizeof(struct relation));
 		temp_rel2->tuples = malloc(sizeof(struct tuple)*middle[position2].rows_size);
+		temp_rel2->num_tuples = middle[position2].rows_size;
 		for(int i=0; i<middle[position2].rows_size; i++)
 		{
 			index = middle[position2].rows_id[relation_position2][i];
@@ -1260,20 +1267,167 @@ void insert_to_middle_predicate(struct middle_table * middle, struct table * tab
 
 }
 
-void executeBatch(struct batch *my_batch,struct table *relations_table){
+void executeQuery(struct predicate queryToExecute, struct middle_table *middle, struct table *relations_table, int middlesSize){
+	if (queryToExecute.predicateType == BIGGER)
+	{
+		//insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, BIGGER);
+		insert_to_middle_predicate(middle, relations_table, middlesSize, queryToExecute.c1, queryToExecute.comparingValue, BIGGER);
+	}else if (queryToExecute.predicateType == LESS)
+	{
+		insert_to_middle_predicate(middle, relations_table, middlesSize, queryToExecute.c1, queryToExecute.comparingValue, LESS);
+	}else if (queryToExecute.predicateType == EQUAL)
+	{
+		insert_to_middle_predicate(middle, relations_table, middlesSize, queryToExecute.c1, queryToExecute.comparingValue, EQUAL);
+	}else if (queryToExecute.predicateType == JOIN)
+	{
+		//insert_to_middle(middle, relations_table, middlesSize, c1, c2);
+		insert_to_middle(middle, relations_table, middlesSize, queryToExecute.c1, queryToExecute.c2);
+	}else{
+		printf("WRONG TYPE OF PREDICATE IN executeQuery\n");
+	}
+}
 
-  int *predicates_array;
-  int flag = 0;
-  //printf("queries are %d\n",my_batch->numQueries);
+void executeBatch(struct batch *my_batch,struct table *relations_table, struct statisticsRelation *sRelation){
+
+	struct predicate *predicatesArray;
+	int flag = 0;
+	//printf("queries are %d\n",my_batch->numQueries);
 
 	for (int i = 0; i < my_batch->numQueries; ++i)
 	{
+		struct statisticsRelation *tempStatsRelArray;
+		tempStatsRelArray = malloc(sizeof(struct statisticsRelation)*sRelation[0].numRelations);
+		copyStatsRelations(tempStatsRelArray, sRelation);
+		//printf("TO NUM DATA EKEI EINAI %d\n", tempStatsRelArray[5].columnsStatistics[3].numData);
+
+
 		struct middle_table *middle;
 		int flag = 0;
 		int first_middle;
 		int middle_size = my_batch->queries[i].size2;
+		int numJoins = 0;
+		struct column **columnsToBeJoinedArray, **reorderedColumnsToBeJoinedArray;;
 		middle = create_middle_table(my_batch->queries[i].size2);
-		predicates_array = string_parser(my_batch->queries[i], middle, relations_table, my_batch->queries[i].size2);
+		predicatesArray = string_parser(my_batch->queries[i], middle, relations_table, my_batch->queries[i].size2);
+		for (int j = 0; j < my_batch->queries[i].size2; ++j)
+		{
+			if (predicatesArray[j].predicateType < 3)
+			{
+				executeQuery(predicatesArray[j], middle, relations_table, my_batch->queries[i].size2);
+				if (predicatesArray[j].predicateType == BIGGER)
+				{
+					if (statistsicsInequal(&tempStatsRelArray[predicatesArray[j].c1.table], predicatesArray[j].c1.column, predicatesArray[j].comparingValue, BIGGER) == -1)
+					{
+						printf("ZERO DIVISION IN statistsicsInequal\n");
+					}
+				}else if (predicatesArray[j].predicateType == LESS)
+				{
+					if (statistsicsInequal(&tempStatsRelArray[predicatesArray[j].c1.table], predicatesArray[j].c1.column, predicatesArray[j].comparingValue, LESS) == -1)
+					{
+						printf("ZERO DIVISION IN statistsicsInequal\n");
+					}
+				}else if (predicatesArray[j].predicateType == EQUAL)
+				{
+					//printf("ZITAW TO %d.%d KAI VAL %d\n", predicatesArray[j].c1.table, predicatesArray[j].c1.column, predicatesArray[j].comparingValue);
+					if (statisticsEqual(&tempStatsRelArray[predicatesArray[j].c1.table], predicatesArray[j].c1.column, predicatesArray[j].comparingValue, relations_table[predicatesArray[j].c1.table]) == -1)
+					{
+						printf("ZERO DIVISION IN statisticsEqual\n");
+					}
+				}else{
+					printf("INVALID TYPE OF PREDICATE INTO executeBatch\n");
+				}
+
+			}else{
+				numJoins++;
+			}
+		}
+		if (numJoins)
+		{
+			columnsToBeJoinedArray = malloc(sizeof(struct column *)*(numJoins*2));
+			reorderedColumnsToBeJoinedArray = malloc(sizeof(struct column *)*(numJoins*2));
+			for (int j = 0; j < numJoins*2; ++j)
+			{
+				columnsToBeJoinedArray[j] = malloc(sizeof(struct column));
+				reorderedColumnsToBeJoinedArray[j] = malloc(sizeof(struct column));
+			}
+			int joinsCounter = 0;
+			for (int j = 0; j < my_batch->queries[i].size2; ++j)
+			{
+				if (predicatesArray[j].predicateType == 3)
+				{
+					*columnsToBeJoinedArray[2*joinsCounter] = predicatesArray[j].c1;
+					*columnsToBeJoinedArray[2*joinsCounter + 1] = predicatesArray[j].c2;
+					joinsCounter++;
+				}
+			}
+
+			reorderColumns(columnsToBeJoinedArray, reorderedColumnsToBeJoinedArray, numJoins*2, tempStatsRelArray, predicatesArray, my_batch->queries[i].size2);
+
+			struct predicate *joinPredicatesArray;
+			//joinPredicatesArray = malloc(sizeof(struct predicate)*(numJoins*2 - 1));
+			joinPredicatesArray = malloc(sizeof(struct predicate)*numJoins);
+
+			for (int j = 0; j < numJoins; ++j)
+			{
+				/*if (j == 0)
+				{
+					joinPredicatesArray[j].predicateType = JOIN;
+					joinPredicatesArray[j].c1.table = reorderedColumnsToBeJoinedArray[0]->table;
+					joinPredicatesArray[j].c1.virtualRelation = reorderedColumnsToBeJoinedArray[0]->virtualRelation;
+					joinPredicatesArray[j].c1.column = reorderedColumnsToBeJoinedArray[0]->column;
+					joinPredicatesArray[j].c2.table = reorderedColumnsToBeJoinedArray[1]->table;
+					joinPredicatesArray[j].c2.virtualRelation =  reorderedColumnsToBeJoinedArray[1]->virtualRelation;
+					joinPredicatesArray[j].c2.column = reorderedColumnsToBeJoinedArray[1]->column;
+				}else{
+					joinPredicatesArray[j].predicateType = JOIN;
+					joinPredicatesArray[j].c1.table = reorderedColumnsToBeJoinedArray[2*j]->table;
+					joinPredicatesArray[j].c1.virtualRelation = reorderedColumnsToBeJoinedArray[2*j]->virtualRelation;
+					joinPredicatesArray[j].c1.column = reorderedColumnsToBeJoinedArray[2*j]->column;
+					joinPredicatesArray[j].c2.table = reorderedColumnsToBeJoinedArray[2*j + 1]->table;
+					joinPredicatesArray[j].c2.virtualRelation =  reorderedColumnsToBeJoinedArray[2*j + 1]->virtualRelation;
+					joinPredicatesArray[j].c2.column = reorderedColumnsToBeJoinedArray[2*j + 1]->column;
+				}*/
+				joinPredicatesArray[j].predicateType = JOIN;
+				joinPredicatesArray[j].c1.table = reorderedColumnsToBeJoinedArray[2*j]->table;
+				joinPredicatesArray[j].c1.virtualRelation = reorderedColumnsToBeJoinedArray[2*j]->virtualRelation;
+				joinPredicatesArray[j].c1.column = reorderedColumnsToBeJoinedArray[2*j]->column;
+				joinPredicatesArray[j].c2.table = reorderedColumnsToBeJoinedArray[2*j + 1]->table;
+				joinPredicatesArray[j].c2.virtualRelation =  reorderedColumnsToBeJoinedArray[2*j + 1]->virtualRelation;
+				joinPredicatesArray[j].c2.column = reorderedColumnsToBeJoinedArray[2*j + 1]->column;
+				//printf("%d.%d = %d.%d\n", joinPredicatesArray[j].c1.virtualRelation,joinPredicatesArray[j].c1.column,joinPredicatesArray[j].c2.virtualRelation,joinPredicatesArray[j].c2.column);
+				/*joinPredicatesArray[j].predicateType = JOIN;
+				joinPredicatesArray[j].c1.table = reorderedColumnsToBeJoinedArray[j]->table;
+				joinPredicatesArray[j].c1.virtualRelation = reorderedColumnsToBeJoinedArray[j]->virtualRelation;
+				joinPredicatesArray[j].c1.column = reorderedColumnsToBeJoinedArray[j]->column;
+				joinPredicatesArray[j].c2.table = reorderedColumnsToBeJoinedArray[j + 1]->table;
+				joinPredicatesArray[j].c2.virtualRelation =  reorderedColumnsToBeJoinedArray[j + 1]->virtualRelation;
+				joinPredicatesArray[j].c2.column = reorderedColumnsToBeJoinedArray[j + 1]->column;
+				printf("%d.%d = %d.%d\n", joinPredicatesArray[j].c1.virtualRelation,joinPredicatesArray[j].c1.column,joinPredicatesArray[j].c2.virtualRelation,joinPredicatesArray[j].c2.column);*/
+			}
+			//printf("EDW\n");
+
+			/*for (int j = 0; j < (numJoins*2 - 1); ++j)
+			{
+				executeQuery(joinPredicatesArray[j], middle, relations_table, my_batch->queries[i].size2);
+			}*/
+			for (int j = 0; j < numJoins; ++j)
+			{
+				executeQuery(joinPredicatesArray[j], middle, relations_table, my_batch->queries[i].size2);
+			}
+			//printf("EDW2\n");
+		}
+		/*for (int i = 0; i < sRelation[0].numRelations; ++i)
+		{
+			free(tempStatsRelArray[i].columnsStatistics);
+		}
+		free(tempStatsRelArray);*/
+		/*for (int j = 0; j < my_batch->queries[i].size2; ++j)
+		{
+			if (predicatesArray[j].predicateType == 3)
+			{
+				executeQuery(predicatesArray[j], middle, relations_table, my_batch->queries[i].size2);
+			}
+		}*/
 		for(int index = 0; index < middle_size; index++){
 			if(middle[index].numb_of_parts > 0){
 				if(flag == 0){
@@ -1291,15 +1445,12 @@ void executeBatch(struct batch *my_batch,struct table *relations_table){
 			if(middle[j].numb_of_parts > 0)
 			{
 				mergedPosition = j;
-				//printf("EXW\n");
-				//printf("EVRIKA TON %d\n", j);
 			}
 		}
-		// 	TO MERGED MIDDLE EINAI TO KELI STO OPIO EXOUN SIGLINEI OLA TA MIDDLE TABLES STO TELOS
-		// NOTE TO SELF NA PROSTHESW MERGERER LATER
+
 		printQueryAndCheckSumResult(&middle[mergedPosition], relations_table, my_batch->queries[i]);
 		freeMiddle(&middle[mergedPosition]);
-    	free(predicates_array);
+    	free(predicatesArray);
     //freeMiddleTable(middle, my_batch->queries[i].size2);
 	}
 }

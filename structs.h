@@ -20,6 +20,7 @@
 #include "statistics.h"
 
 struct statistic;
+struct statisticsRelation;
 
 struct tuple {
   int32_t key;
@@ -58,6 +59,14 @@ struct column{
   int table;
   int virtualRelation;
   int column;
+};
+
+struct predicate
+{
+  int predicateType;
+  struct column c1;
+  struct column c2;
+  int comparingValue;
 };
 
 struct table{
@@ -128,11 +137,12 @@ struct result *scanRelations(struct relation *relationR, struct relation *relati
 struct result *filterPredicate(struct relation *relationR, int comparingValue, int comparingMode);
 int *findProjectionsIndeces(int *participants, int numb_of_parts, int ** projections, int numProjections, int *table_indeces);
 void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table *table, struct query currQuery);
-void executeBatch(struct batch *my_batch,struct table *relations_table);
+void executeBatch(struct batch *my_batch,struct table *relations_table, struct statisticsRelation *sRelation);
 void printQuery(struct query myQuery);
 void freeQuery(struct query myQuery);
 void freeBatch(struct batch *myBatch);
 void freeResult(struct result *myResult);
 void freeRelation(struct relation *myRelation);
 void freeMiddle(struct middle_table *myMiddle);
+void executeQuery(struct predicate queryToExecute, struct middle_table *middle, struct table *relations_table, int middlesSize);
 #endif

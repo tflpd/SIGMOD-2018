@@ -143,12 +143,12 @@ void free_table_new(struct table * my_table, int lines) {
     free(my_table);
 }
 
-int * string_parser(struct query currQuery, struct middle_table * middle, struct table * relations_table, int query_size) {
+struct predicate *string_parser(struct query currQuery, struct middle_table * middle, struct table * relations_table, int query_size) {
     int middlesSize;
     int ch1 = '=';
     int ch2 = '<';
     int ch3 = '>';
-    int * type_of_predicate;
+    //int * type_of_predicate;
     int global_index;
     char * my_operator;
     char * test_operator;
@@ -156,8 +156,10 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
     char * temp;
     char * p_end;
     int index;
-    struct column c1, c2;
-    type_of_predicate = malloc(sizeof(int) * query_size);
+    //struct column c1, c2;
+    //type_of_predicate = malloc(sizeof(int) * query_size);
+    struct predicate *predicatesArray;
+    predicatesArray = malloc(sizeof(struct predicate)*query_size);
 
     for (global_index = 0; global_index < query_size; global_index++) {
         middlesSize = currQuery.size2;
@@ -173,27 +175,29 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
                 if (sscanf(buf, "%d", & x)) {
                     switch (index) {
                     case 0:
-                        c1.table = currQuery.table_indeces[x];
-                        c1.virtualRelation = x;
+                        predicatesArray[global_index].c1.table = currQuery.table_indeces[x];
+                        predicatesArray[global_index].c1.virtualRelation = x;
                     case 1:
-                        c1.column = x;
+                        predicatesArray[global_index].c1.column = x;
                     case 2:
                         comparison_value = x;
                     case 3:
-                        c2.column = x;
+                        predicatesArray[global_index].c2.column = x;
                     }
                 }
                 index++;
             }
             //printf("table 1| %d %d table 2| %d %d",c1.table,c1.column,c2.table,c2.column );
             if ((test_operator = strchr(my_operator, '.')) != NULL) {
-                c2.table = currQuery.table_indeces[comparison_value];
-                c2.virtualRelation = comparison_value;
-                type_of_predicate[global_index] = JOIN;
-                insert_to_middle(middle, relations_table, middlesSize, c1, c2);
+                predicatesArray[global_index].c2.table = currQuery.table_indeces[comparison_value];
+                predicatesArray[global_index].c2.virtualRelation = comparison_value;
+                predicatesArray[global_index].predicateType = JOIN;
+                //insert_to_middle(middle, relations_table, middlesSize, c1, c2);
             } else {
-                type_of_predicate[global_index] = EQUAL;
-                insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, EQUAL);
+                //type_of_predicate[global_index] = EQUAL;
+                predicatesArray[global_index].predicateType = EQUAL;
+                predicatesArray[global_index].comparingValue = comparison_value;
+                //insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, EQUAL);
             }
         } else if ((my_operator = strchr(currQuery.filters[global_index], ch2)) != NULL) {
             //printf("%s",my_operator);
@@ -203,18 +207,18 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
                 if (sscanf(buf, "%d", & x)) {
                     switch (index) {
                     case 0:
-                        c1.table = currQuery.table_indeces[x];
-                        c1.virtualRelation = x;
+                        predicatesArray[global_index].c1.table = currQuery.table_indeces[x];
+                        predicatesArray[global_index].c1.virtualRelation = x;
                     case 1:
-                        c1.column = x;
+                        predicatesArray[global_index].c1.column = x;
                     case 2:
-                        comparison_value = x;
+                        predicatesArray[global_index].comparingValue = x;
                     }
                 }
                 index++;
             }
-            type_of_predicate[global_index] = LESS;
-            insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, LESS);
+            predicatesArray[global_index].predicateType = LESS;
+            //insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, LESS);
             //printf("table 1| %d %d ",c1.table,c1.column);
         } else if ((my_operator = strchr(currQuery.filters[global_index], ch3)) != NULL) {
             int comparison_value;
@@ -226,23 +230,23 @@ int * string_parser(struct query currQuery, struct middle_table * middle, struct
                 if (sscanf(buf, "%d", & x)) {
                     switch (index) {
                     case 0:
-                        c1.table = currQuery.table_indeces[x];
-                        c1.virtualRelation = x;
+                        predicatesArray[global_index].c1.table = currQuery.table_indeces[x];
+                        predicatesArray[global_index].c1.virtualRelation = x;
                     case 1:
-                        c1.column = x;
+                        predicatesArray[global_index].c1.column = x;
                     case 2:
-                        comparison_value = x;
+                        predicatesArray[global_index].comparingValue = x;
                     }
                 }
                 index++;
             }
-            type_of_predicate[global_index] = BIGGER;
-            insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, BIGGER);
+            predicatesArray[global_index].predicateType = BIGGER;
+            //insert_to_middle_predicate(middle, relations_table, middlesSize, c1, comparison_value, BIGGER);
             //printf("table 1| %d %d %d",c1.table,c1.column, temp);
         } else
             printf("fail");
 
     }
 
-    return type_of_predicate;
+    return predicatesArray;
 }

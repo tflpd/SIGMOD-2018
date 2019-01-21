@@ -11,8 +11,17 @@ struct statisticsRelation *createStatisticsRelations(struct table *myTable, int 
 			sRelation[i].columnsStatistics[j] = *myTable[i].my_relation[j].statistics;
 		}
 		sRelation[i].numColumns = myTable[i].columns;
+		sRelation[i].numRelations = numRelations;
 	}
 	return sRelation;
+}
+
+void freeStatistiscsRelations(struct statisticsRelation *sRelation){
+	for (int i = 0; i < sRelation[0].numRelations; ++i)
+	{
+		free(sRelation[i].columnsStatistics);
+	}
+	free(sRelation);
 }
 
 int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int targetValue, struct table myTable){
@@ -20,7 +29,7 @@ int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int t
 	int prevNumData = sRelation->columnsStatistics[targetColID].numData;
 	if (prevNumData == 0)
 	{
-		return 0;
+		return -1;
 	}
 	sRelation->columnsStatistics[targetColID].min = targetValue;
 	sRelation->columnsStatistics[targetColID].max = targetValue;
@@ -32,7 +41,7 @@ int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int t
 			{
 				if (sRelation->columnsStatistics[targetColID].numDiscreteData == 0)
 				{
-					return 0;
+					return -1;
 				}
 				sRelation->columnsStatistics[targetColID].numData = sRelation->columnsStatistics[targetColID].numData / sRelation->columnsStatistics[targetColID].numDiscreteData;	
 			}else{
@@ -56,7 +65,7 @@ int statisticsEqual(struct statisticsRelation *sRelation, int targetColID, int t
 			double x = 1 - sRelation->columnsStatistics[targetColID].numData / prevNumData;
 			if (sRelation->columnsStatistics[i].numDiscreteData == 0)
 			{
-				return 0;
+				return -1;
 			}
 			double x2 = pow(x, sRelation->columnsStatistics[i].numData / sRelation->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
@@ -72,7 +81,7 @@ int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, in
 	int prevNumData = sRelation->columnsStatistics[targetColID].numData;
 	if (prevNumData == 0)
 	{
-		return 0;
+		return -1;
 	}
 
 	if (operationType == LESS)
@@ -96,7 +105,7 @@ int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, in
 
 	if ((sRelation->columnsStatistics[targetColID].max - sRelation->columnsStatistics[targetColID].min) == 0)
 	{
-		return 0;
+		return -1;
 	}
 	sRelation->columnsStatistics[targetColID].numDiscreteData *= (k2 - k1) / (sRelation->columnsStatistics[targetColID].max - sRelation->columnsStatistics[targetColID].min);
 	sRelation->columnsStatistics[targetColID].numData *= (k2 - k1) / (sRelation->columnsStatistics[targetColID].max - sRelation->columnsStatistics[targetColID].min);
@@ -108,9 +117,9 @@ int statistsicsInequal(struct statisticsRelation *sRelation, int targetColID, in
 		if (i != targetColID)
 		{
 			double x = 1 - sRelation->columnsStatistics[targetColID].numData / prevNumData;
-			if (sRelation->columnsStatistics[i].numDiscreteData == )
+			if (sRelation->columnsStatistics[i].numDiscreteData == 0)
 			{
-				return 0;
+				return -1;
 			}
 			double x2 = pow(x, sRelation->columnsStatistics[i].numData / sRelation->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
@@ -125,7 +134,7 @@ int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetC
 	int prevNumData = sRelation->columnsStatistics[targetColIDA].numData;
 	if (prevNumData == 0)
 	{
-		return 0;
+		return -1;
 	}
 	if (sRelation->columnsStatistics[targetColIDA].min > sRelation->columnsStatistics[targetColIDB].min)
 	{
@@ -159,7 +168,7 @@ int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetC
 			double x = 1 - sRelation->columnsStatistics[targetColIDA].numData / prevNumData;
 			if (sRelation->columnsStatistics[i].numDiscreteData)
 			{
-				return 0;
+				return -1;
 			}
 			double x2 = pow(x, sRelation->columnsStatistics[i].numData / sRelation->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
@@ -167,7 +176,7 @@ int statisticsSameRelationJoin(struct statisticsRelation *sRelation, int targetC
 			sRelation->columnsStatistics[i].numData = sRelation->columnsStatistics[targetColIDA].numData;
 		}
 	}
-	return 1;
+	return sRelation->columnsStatistics[targetColIDA].numData;
 }
 
 int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelation *sRelationB, int targetColIDA, int targetColIDB){
@@ -187,20 +196,20 @@ int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelat
 
 	int n = sRelationA->columnsStatistics[targetColIDA].max - sRelationA->columnsStatistics[targetColIDA].min + 1;
 	int newNumData = (sRelationA->columnsStatistics[targetColIDA].numData * sRelationB->columnsStatistics[targetColIDB].numData) / n;
-	if (prevNumData == 0)
+	if (newNumData == 0)
 	{
-		return 0;
+		return -1;
 	}
 	int newNumDiscrData = (sRelationA->columnsStatistics[targetColIDA].numDiscreteData * sRelationB->columnsStatistics[targetColIDB].numDiscreteData) / n;
 	int prevNumDiscrDataA = sRelationA->columnsStatistics[targetColIDA].numDiscreteData;
 	if (prevNumDiscrDataA == 0)
 	{
-		return 0;
+		return -1;
 	}
 	int prevNumDiscrDataB = sRelationB->columnsStatistics[targetColIDB].numDiscreteData;
 	if (prevNumDiscrDataB == 0)
 	{
-		return 0;
+		return -1;
 	}
 
 	sRelationA->columnsStatistics[targetColIDA].numData = newNumData;
@@ -216,7 +225,7 @@ int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelat
 			double x = 1 - sRelationA->columnsStatistics[targetColIDA].numDiscreteData / prevNumDiscrDataA;
 			if (sRelationA->columnsStatistics[i].numDiscreteData == 0)
 			{
-				return 0;
+				return -1;
 			}
 			double x2 = pow(x, sRelationA->columnsStatistics[i].numData / sRelationA->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
@@ -232,7 +241,7 @@ int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelat
 			double x = 1 - sRelationB->columnsStatistics[targetColIDB].numDiscreteData / prevNumDiscrDataB;
 			if (sRelationB->columnsStatistics[i].numDiscreteData == 0)
 			{
-				return 0;
+				return -1;
 			}
 			double x2 = pow(x, sRelationB->columnsStatistics[i].numData / sRelationB->columnsStatistics[i].numDiscreteData);
 			x = 1 - x2;
@@ -240,7 +249,7 @@ int statisticsJoin(struct statisticsRelation *sRelationA, struct statisticsRelat
 			sRelationB->columnsStatistics[i].numData = sRelationA->columnsStatistics[targetColIDA].numData;
 		}
 	}
-	return 1;
+	return newNumData;
 }
 
 int statisticsInnerJoin(struct statisticsRelation *sRelation, int targetColID){
@@ -254,5 +263,138 @@ int statisticsInnerJoin(struct statisticsRelation *sRelation, int targetColID){
 			sRelation->columnsStatistics[i].numData = sRelation->columnsStatistics[targetColID].numData;
 		}
 	}
-	return 1;
+	return sRelation->columnsStatistics[targetColID].numData;
+}
+
+void copyStatsColumns(struct statistic *tempCol, struct statistic *sCol, int numColumns){
+	for (int i = 0; i < numColumns; ++i)
+	{
+		tempCol[i].min = sCol[i].min;
+		tempCol[i].max = sCol[i].max;
+		tempCol[i].numData = sCol[i].numData;
+		tempCol[i].numDiscreteData = sCol[i].numDiscreteData;
+	}
+}
+
+void copyStatsRelations(struct statisticsRelation *tempStatsRelations, struct statisticsRelation *sRelations){
+	for (int i = 0; i < sRelations[0].numRelations; ++i)
+	{
+		tempStatsRelations[i].columnsStatistics = malloc(sizeof(struct statistic)*sRelations[i].numColumns);
+		copyStatsColumns(tempStatsRelations[i].columnsStatistics, sRelations[i].columnsStatistics, sRelations[i].numColumns);
+		tempStatsRelations[i].numColumns = sRelations[i].numColumns;
+		tempStatsRelations[i].numRelations = sRelations[i].numRelations;
+	}
+}
+
+int connected(int virtualLastRelationID, int virtualNewRelationID, struct predicate *predicatesArray, int numPredicates){
+	for (int i = 0; i < numPredicates; ++i)
+	{
+		if (predicatesArray[i].predicateType == JOIN)
+		{
+			if((predicatesArray[i].c1.virtualRelation == virtualLastRelationID) && (predicatesArray[i].c2.virtualRelation == virtualNewRelationID)){
+				return 1;
+			}
+			if((predicatesArray[i].c1.virtualRelation == virtualNewRelationID) && (predicatesArray[i].c2.virtualRelation == virtualLastRelationID)){
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+void reorderColumns(struct column **columnsToBeJoinedArray, struct column **reorderedColumnsToBeJoinedArray, int numColumns, struct statisticsRelation *sRelations, struct predicate *predicatesArray, int numPredicates){
+	int *columnsCost;
+	columnsCost = malloc(sizeof(int)*numColumns);
+	for (int i = 0; i < numColumns; ++i)
+	{
+		columnsCost[i] = sRelations[columnsToBeJoinedArray[i]->table].columnsStatistics[columnsToBeJoinedArray[i]->column].numData;
+	}
+	int minCost = columnsCost[0];
+	int minCostIndex = 0;
+	for (int i = 0; i < numColumns; ++i)
+	{
+		if (columnsCost[i] < minCost)
+		{
+			minCost = columnsCost[i];
+			minCostIndex = i;
+		}
+	}
+
+	int reorderedArrayCounter = 0;
+	reorderedColumnsToBeJoinedArray[reorderedArrayCounter] = columnsToBeJoinedArray[minCostIndex];
+	columnsToBeJoinedArray[minCostIndex] = NULL;
+	reorderedArrayCounter++;
+
+	for (int i = 1; i < numColumns; ++i)
+	{
+		struct statisticsRelation **tempStatsRelArray;
+		tempStatsRelArray = malloc(sizeof(struct statisticsRelation*)*(numColumns - i));
+		for (int j = 0; j < numColumns - i; ++j)
+		{
+			tempStatsRelArray[j] = malloc(sizeof(struct statisticsRelation)*sRelations[0].numRelations);
+			copyStatsRelations(tempStatsRelArray[j], sRelations);
+		}
+
+		int *costsArray;
+		costsArray = malloc(sizeof(int)*(numColumns - i));
+
+		int tempArrayCounter = 0;
+		for (int j = 0; j < numColumns; ++j)
+		{
+			if (columnsToBeJoinedArray[j] != NULL)
+			{
+				int lastRelationID = reorderedColumnsToBeJoinedArray[i - 1]->table;
+				int newRelationID = columnsToBeJoinedArray[j]->table;
+				int virtualLastRelationID = reorderedColumnsToBeJoinedArray[i - 1]->virtualRelation;
+				int virtualNewRelationID = columnsToBeJoinedArray[j]->virtualRelation;
+				int lastColumnID = reorderedColumnsToBeJoinedArray[i - 1]->column;
+				int newColumnID = columnsToBeJoinedArray[j]->column;
+				if (connected(virtualLastRelationID, virtualNewRelationID, predicatesArray, numPredicates))
+				{
+					if (virtualLastRelationID == virtualNewRelationID)
+					{
+						if (lastColumnID == newColumnID)
+						{
+							costsArray[tempArrayCounter] = statisticsInnerJoin(&tempStatsRelArray[tempArrayCounter][lastRelationID], lastColumnID);
+						}else{
+							costsArray[tempArrayCounter] = statisticsSameRelationJoin(&tempStatsRelArray[tempArrayCounter][lastRelationID], lastColumnID, newColumnID);
+						}
+					}else{
+						costsArray[tempArrayCounter] = statisticsJoin(&tempStatsRelArray[tempArrayCounter][lastRelationID], &tempStatsRelArray[tempArrayCounter][newRelationID], lastColumnID, newColumnID);
+					}
+					tempArrayCounter++;
+				}
+			}
+		}
+
+		minCost = costsArray[0];
+		minCostIndex = 0;
+		for (int j = 0; j < tempArrayCounter; ++j)
+		{
+			if (costsArray[j] < minCost)
+			{
+				minCost = costsArray[j];
+				minCostIndex = j;
+			}
+		}
+
+		tempArrayCounter = 0;
+		for (int j = 0; j < numColumns; ++j)
+		{
+			if (columnsToBeJoinedArray[j] != NULL)
+			{
+				if (tempArrayCounter == minCostIndex)
+				{
+					freeStatistiscsRelations(sRelations);
+					sRelations = tempStatsRelArray[tempArrayCounter];
+					reorderedColumnsToBeJoinedArray[reorderedArrayCounter] = columnsToBeJoinedArray[j];
+					reorderedArrayCounter++;
+					columnsToBeJoinedArray[j] = NULL;
+				}else{
+					freeStatistiscsRelations(tempStatsRelArray[tempArrayCounter]);
+				}
+				tempArrayCounter++;
+			}
+		}
+	}
 }
