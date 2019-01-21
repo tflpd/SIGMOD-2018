@@ -1,12 +1,12 @@
-OBJS = main.o functions.o myList.o storage.o statistics.o
-SOURCE = main.c functions.c myList.c storage.c statistics.c
-HEADER = structs.h myList.h	storage.h statistics.h
+OBJS = main.o functions.o myList.o storage.o statistics.o jobscheduler.o jobs.o
+SOURCE = main.c functions.c myList.c storage.c statistics.c jobscheduler.c jobs.c
+HEADER = structs.h myList.h	storage.h statistics.h jobscheduler.h jobs.h
 OUT = project
 CC = gcc
 FLAGS = -g -c
 
 $(OUT): $(OBJS)
-	$(CC) -g $(OBJS) -lm -o $@
+	$(CC) -g $(OBJS) -lm -pthread -o $@
 
 main.o: main.c
 	$(CC) $(FLAGS) main.c
@@ -22,6 +22,12 @@ storage.o: storage.c
 
 statistics.o: statistics.c
 	$(CC) $(FLAGS) statistics.c -lm
+
+threapool.o: jobscheduler.c
+	$(CC) $(FLAGS) jobscheduler.c -lm -lpthread
+
+jobs.o: jobs.c
+	$(CC) $(FLAGS) jobs.c -lm
 
 clean:
 	rm -rf $(OBJS) $(OUT)
