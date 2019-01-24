@@ -10,6 +10,7 @@
 #define R 1 //relation R will be alaways the first
 #define S 2 //relation S alaways the second
 #define N 50000000 //N is the maximum range kept in the statistics above which we start hashing discrete values
+#define PRINTTUPLESRESULTS 0 //Turn into 1 to print also the tuples results of each join apart from the checksums
 
 #include <time.h>
 #include <math.h>
