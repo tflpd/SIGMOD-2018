@@ -163,7 +163,11 @@ void JoinJob(void *arguments){
 		join_result->numRows = 0;
 	}
 
-
+	if (args->index[bucket].minTuples != 0)
+	{
+		free(args->index[bucket].bucket);
+	    free(args->index[bucket].chain);
+	}
 	delete_list(list);
 
 
