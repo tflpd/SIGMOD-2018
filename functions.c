@@ -945,31 +945,6 @@ struct result *scanRelations(struct relation *relationR, struct relation *relati
 			resultsCounter++;
 		}
 	}
-	/*// If relation R has the least tuples
-	if (relationR->num_tuples <= relationS->num_tuples)
-	{
-		// Iterate through R
-		for (int i = 0; i < relationR->num_tuples; ++i)
-		{
-			if (relationR->tuples[i].payload == relationS->tuples[i].payload)
-			{
-				// Add them to the results list
-				list = add_to_buff(list, relationR->tuples[i].key, relationS->tuples[i].key);
-				resultsCounter++;
-			}
-		}
-	}else{// If relation S has the least tuples
-		for (int i = 0; i < relationS->num_tuples; ++i)
-		{
-			if (relationR->tuples[i].payload == relationS->tuples[i].payload)
-			{
-				// Add them to the results list
-				list = add_to_buff(list, relationR->tuples[i].key, relationS->tuples[i].key);
-				resultsCounter++;
-			}
-		}
-	}*/
-
 	struct result *finalResult;
 	finalResult = malloc(sizeof(struct result));
 	finalResult->rowIDsR = malloc(sizeof(int)*resultsCounter);
@@ -1112,12 +1087,17 @@ void printQueryAndCheckSumResult(struct middle_table *mergedMiddle, struct table
 				// Find the id of the row of that relation to be projected
 				int rowProjectionID = mergedMiddle->rows_id[projectionsIndeces[j]][i];
 				// And print it or I hope so
-				//printf("APO REL %d APO COL %d ROW %d\n", relationProjectionID, columnProjectionID, rowProjectionID);
 				int value = table[relationProjectionID].my_relation[columnProjectionID].tuples[rowProjectionID].payload;
-				//printf("%d ", value);
+				if (PRINTTUPLESRESULTS)
+				{
+					printf("%d ", value);
+				}
 				checkSum[j] += value;
 			}
-			//printf("\n");
+			if (PRINTTUPLESRESULTS)
+			{
+				printf("\n");
+			}
 		}
 		//printf("The checkSum is:\n");
 		for (int i = 0; i < currQuery.size3; ++i)
@@ -1624,14 +1604,13 @@ void executeBatch(struct batch *my_batch,struct table *relations_table, struct s
 
 	struct predicate *predicatesArray;
 	int flag = 0;
-	//printf("queries are %d\n",my_batch->numQueries);
+
 
 	for (int i = 0; i < my_batch->numQueries; ++i)
 	{
 		struct statisticsRelation *tempStatsRelArray;
 		tempStatsRelArray = malloc(sizeof(struct statisticsRelation)*sRelation[0].numRelations);
 		copyStatsRelations(tempStatsRelArray, sRelation);
-		//printf("TO NUM DATA EKEI EINAI %d\n", tempStatsRelArray[5].columnsStatistics[3].numData);
 
 
 		struct middle_table *middle;
@@ -1661,7 +1640,6 @@ void executeBatch(struct batch *my_batch,struct table *relations_table, struct s
 					}
 				}else if (predicatesArray[j].predicateType == EQUAL)
 				{
-					//printf("ZITAW TO %d.%d KAI VAL %d\n", predicatesArray[j].c1.table, predicatesArray[j].c1.column, predicatesArray[j].comparingValue);
 					if (statisticsEqual(&tempStatsRelArray[predicatesArray[j].c1.table], predicatesArray[j].c1.column, predicatesArray[j].comparingValue, relations_table[predicatesArray[j].c1.table]) == -1)
 					{
 						printf("ZERO DIVISION IN statisticsEqual\n");
@@ -1702,24 +1680,6 @@ void executeBatch(struct batch *my_batch,struct table *relations_table, struct s
 
 			for (int j = 0; j < numJoins; ++j)
 			{
-				/*if (j == 0)
-				{
-					joinPredicatesArray[j].predicateType = JOIN;
-					joinPredicatesArray[j].c1.table = reorderedColumnsToBeJoinedArray[0]->table;
-					joinPredicatesArray[j].c1.virtualRelation = reorderedColumnsToBeJoinedArray[0]->virtualRelation;
-					joinPredicatesArray[j].c1.column = reorderedColumnsToBeJoinedArray[0]->column;
-					joinPredicatesArray[j].c2.table = reorderedColumnsToBeJoinedArray[1]->table;
-					joinPredicatesArray[j].c2.virtualRelation =  reorderedColumnsToBeJoinedArray[1]->virtualRelation;
-					joinPredicatesArray[j].c2.column = reorderedColumnsToBeJoinedArray[1]->column;
-				}else{
-					joinPredicatesArray[j].predicateType = JOIN;
-					joinPredicatesArray[j].c1.table = reorderedColumnsToBeJoinedArray[2*j]->table;
-					joinPredicatesArray[j].c1.virtualRelation = reorderedColumnsToBeJoinedArray[2*j]->virtualRelation;
-					joinPredicatesArray[j].c1.column = reorderedColumnsToBeJoinedArray[2*j]->column;
-					joinPredicatesArray[j].c2.table = reorderedColumnsToBeJoinedArray[2*j + 1]->table;
-					joinPredicatesArray[j].c2.virtualRelation =  reorderedColumnsToBeJoinedArray[2*j + 1]->virtualRelation;
-					joinPredicatesArray[j].c2.column = reorderedColumnsToBeJoinedArray[2*j + 1]->column;
-				}*/
 				joinPredicatesArray[j].predicateType = JOIN;
 				joinPredicatesArray[j].c1.table = reorderedColumnsToBeJoinedArray[2*j]->table;
 				joinPredicatesArray[j].c1.virtualRelation = reorderedColumnsToBeJoinedArray[2*j]->virtualRelation;
@@ -1727,33 +1687,15 @@ void executeBatch(struct batch *my_batch,struct table *relations_table, struct s
 				joinPredicatesArray[j].c2.table = reorderedColumnsToBeJoinedArray[2*j + 1]->table;
 				joinPredicatesArray[j].c2.virtualRelation =  reorderedColumnsToBeJoinedArray[2*j + 1]->virtualRelation;
 				joinPredicatesArray[j].c2.column = reorderedColumnsToBeJoinedArray[2*j + 1]->column;
-				//printf("%d.%d = %d.%d\n", joinPredicatesArray[j].c1.virtualRelation,joinPredicatesArray[j].c1.column,joinPredicatesArray[j].c2.virtualRelation,joinPredicatesArray[j].c2.column);
-				/*joinPredicatesArray[j].predicateType = JOIN;
-				joinPredicatesArray[j].c1.table = reorderedColumnsToBeJoinedArray[j]->table;
-				joinPredicatesArray[j].c1.virtualRelation = reorderedColumnsToBeJoinedArray[j]->virtualRelation;
-				joinPredicatesArray[j].c1.column = reorderedColumnsToBeJoinedArray[j]->column;
-				joinPredicatesArray[j].c2.table = reorderedColumnsToBeJoinedArray[j + 1]->table;
-				joinPredicatesArray[j].c2.virtualRelation =  reorderedColumnsToBeJoinedArray[j + 1]->virtualRelation;
-				joinPredicatesArray[j].c2.column = reorderedColumnsToBeJoinedArray[j + 1]->column;
-				printf("%d.%d = %d.%d\n", joinPredicatesArray[j].c1.virtualRelation,joinPredicatesArray[j].c1.column,joinPredicatesArray[j].c2.virtualRelation,joinPredicatesArray[j].c2.column);*/
 			}
-			//printf("EDW\n");
-
-			/*for (int j = 0; j < (numJoins*2 - 1); ++j)
-			{
-				executeQuery(joinPredicatesArray[j], middle, relations_table, my_batch->queries[i].size2);
-			}*/
+			
 			for (int j = 0; j < numJoins; ++j)
 			{
 				executeQuery(joinPredicatesArray[j], middle, relations_table, my_batch->queries[i].size2);
 			}
-			//printf("EDW2\n");
+			
 		}
-		/*for (int i = 0; i < sRelation[0].numRelations; ++i)
-		{
-			free(tempStatsRelArray[i].columnsStatistics);
-		}
-		free(tempStatsRelArray);*/
+		
 		for (int j = 0; j < numJoins*2; ++j)
 		{
 			free(columnsToBeJoinedArray[j]);
@@ -1761,13 +1703,7 @@ void executeBatch(struct batch *my_batch,struct table *relations_table, struct s
 		}
 		free(columnsToBeJoinedArray);
 		free(reorderedColumnsToBeJoinedArray);
-		/*for (int j = 0; j < my_batch->queries[i].size2; ++j)
-		{
-			if (predicatesArray[j].predicateType == 3)
-			{
-				executeQuery(predicatesArray[j], middle, relations_table, my_batch->queries[i].size2);
-			}
-		}*/
+		
 		for(int index = 0; index < middle_size; index++){
 			if(middle[index].numb_of_parts > 0){
 				if(flag == 0){
@@ -1791,7 +1727,6 @@ void executeBatch(struct batch *my_batch,struct table *relations_table, struct s
 		printQueryAndCheckSumResult(&middle[mergedPosition], relations_table, my_batch->queries[i]);
 		freeMiddle(&middle[mergedPosition]);
     	free(predicatesArray);
-    //freeMiddleTable(middle, my_batch->queries[i].size2);
 	}
 }
 

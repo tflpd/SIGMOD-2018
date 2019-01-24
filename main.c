@@ -398,7 +398,6 @@ int main(int argc, char **argv){
 			printf("Queries execution time: %f seconds\n", (double)(end - batchBegin) / CLOCKS_PER_SEC);
 			
 			free(my_batch);
-			freeStatistiscsRelations(sRelation);
 
 			// Free the queries information of that batch
 			/*for (int i = 0; i < my_batch; ++i)
@@ -410,7 +409,7 @@ int main(int argc, char **argv){
 			fclose(fin);
 			free(query);
 			free(queriesFileName);
-			printf("Total execution time: %f seconds\n", (double)(end) - begin / CLOCKS_PER_SEC);
+			//printf("Total execution time: %f seconds\n", (double)(end) - begin / CLOCKS_PER_SEC);
 			print_welcome_msg(0);
 		}
 
@@ -428,6 +427,7 @@ int main(int argc, char **argv){
 
 	free(input);
 	free_table_new(relations_table, lines);
+	freeStatistiscsRelations(sRelation);
 
 
 
