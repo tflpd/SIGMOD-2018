@@ -3,7 +3,6 @@
 #include "storage.h"
 #include "jobscheduler.h"
 #include "jobs.h"
-#define NUMTHREAD 8
 
 /*---------------------------- FIRST PART RE WRITTEN ----------------------------*/
 
@@ -1621,6 +1620,14 @@ void executeBatch(struct batch *my_batch,struct table *relations_table, struct s
 		struct column **columnsToBeJoinedArray, **reorderedColumnsToBeJoinedArray;;
 		middle = create_middle_table(my_batch->queries[i].size2);
 		predicatesArray = string_parser(my_batch->queries[i], middle, relations_table, my_batch->queries[i].size2);
+		/*for (int j = 0; j < my_batch->queries[i].size2; ++j)
+				{
+					if (predicatesArray[j].predicateType == 3)
+					{
+						
+					}
+					executeQuery(predicatesArray[j], middle, relations_table, my_batch->queries[i].size2);
+				}*/
 		for (int j = 0; j < my_batch->queries[i].size2; ++j)
 		{
 			if (predicatesArray[j].predicateType < 3)
